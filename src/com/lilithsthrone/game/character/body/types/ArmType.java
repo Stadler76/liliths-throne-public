@@ -359,7 +359,9 @@ public class ArmType {
 		private BodyPartClothingBlock clothingBlock = new BodyPartClothingBlock(
 				Util.newArrayListOfValues(
 						InventorySlot.HAND,
-						InventorySlot.WRIST),
+						InventorySlot.WRIST,
+						InventorySlot.TORSO_OVER,
+						InventorySlot.TORSO_UNDER),
 				Race.BAT_MORPH,
 				"Due to the fact that [npc.nameHasFull] leathery wings instead of arms, only specialist clothing can be worn in this slot.",
 				Util.newArrayListOfValues(
@@ -410,7 +412,9 @@ public class ArmType {
 		private BodyPartClothingBlock clothingBlock = new BodyPartClothingBlock(
 				Util.newArrayListOfValues(
 						InventorySlot.HAND,
-						InventorySlot.WRIST),
+						InventorySlot.WRIST,
+						InventorySlot.TORSO_OVER,
+						InventorySlot.TORSO_UNDER),
 				Race.HARPY,
 				"Due to the fact that [npc.nameHasFull] bird-like wings instead of arms, only specialist clothing can be worn in this slot.",
 				Util.newArrayListOfValues(
