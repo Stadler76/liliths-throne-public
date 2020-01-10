@@ -480,7 +480,11 @@ public abstract class AbstractClothingType extends AbstractCoreType {
 						this.itemTags.putIfAbsent(slot, new ArrayList<>());
 						this.itemTags.get(slot).addAll(
 								itemTagsElement.getAllOf("tag").stream()
-									.map(Element::getTextContent).map(ItemTag::valueOf)
+									.map(Element::getTextContent)
+									.map(x -> {
+										try { return ItemTag.valueOf(x); }
+										catch (Exception e) { return null; } })
+									.filter(x -> x != null)
 									.collect(Collectors.toList()));
 						
 					}
@@ -490,7 +494,11 @@ public abstract class AbstractClothingType extends AbstractCoreType {
 					this.itemTags.put(
 							relatedSlot,
 							itemTagsElement.getAllOf("tag").stream()
-								.map(Element::getTextContent).map(ItemTag::valueOf)
+								.map(Element::getTextContent)
+								.map(x -> {
+									try { return ItemTag.valueOf(x); }
+									catch (Exception e) { return null; } })
+								.filter(x -> x != null)
 								.collect(Collectors.toList()));
 				}
 			}

@@ -329,7 +329,11 @@ public abstract class AbstractWeaponType extends AbstractCoreType {
 				this.itemTags = coreAttributes
 					.getMandatoryFirstOf("itemTags")
 					.getAllOf("tag").stream()
-					.map(Element::getTextContent).map(ItemTag::valueOf)
+					.map(Element::getTextContent)
+					.map(x -> {
+						try { return ItemTag.valueOf(x); }
+						catch (Exception e) { return null; } })
+					.filter(x -> x != null)
 					.collect(Collectors.toList());
 				
 				this.isMod = true;
