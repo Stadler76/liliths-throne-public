@@ -104,6 +104,44 @@ public enum Attack {
 		return Math.round(damage);
 	}
 
+	public static float calculateTeaseDamage(GameCharacter attacker, GameCharacter defender, float attackersDamage, float damage) {
+		if (attacker!=null) { // Attacker modifiers:
+			damage += attackersDamage * (1 + attacker.getAttributeValue(Attribute.DAMAGE_LUST)/100f);
+
+			if(defender!=null) {
+				if((attacker.hasTrait(Perk.FEMALE_ATTRACTION, true) && defender.isFeminine())
+						|| (attacker.hasTrait(Perk.MALE_ATTRACTION, true) && !defender.isFeminine())) {
+					damage += attackersDamage * 0.1f;
+				}
+			}
+			if (damage < 1) {
+				damage = 1;
+			}
+
+		} else {
+			damage = attackersDamage;
+		}
+
+		if (defender!=null && !defender.hasStatusEffect(StatusEffect.DESPERATE_FOR_SEX)) {
+			// Defender modifiers:
+			if(attacker!=null) {
+				if((defender.getSexualOrientation()==SexualOrientation.ANDROPHILIC && attacker.isFeminine())
+						|| (attacker.getSexualOrientation()==SexualOrientation.ANDROPHILIC && defender.isFeminine())) {
+					damage*=0.5f;
+				}
+				if((defender.getSexualOrientation()==SexualOrientation.GYNEPHILIC && !attacker.isFeminine())
+						|| (attacker.getSexualOrientation()==SexualOrientation.GYNEPHILIC && !defender.isFeminine())) {
+					damage*=0.5f;
+				}
+			}
+			if (damage < 1) {
+				damage = 1;
+			}
+		}
+
+		return damage;
+	}
+
 	public static int calculateDamage(GameCharacter attacker, GameCharacter defender, Attack attackType, AbstractWeapon weapon, int damage, boolean critical) {
 		float finalDamage = getMinimumDamage(attacker, defender, attackType, weapon, damage);
 
@@ -386,6 +424,10 @@ public enum Attack {
 						damage += attackersDamage * (attacker.getAttributeValue(Attribute.DAMAGE_SPELLS)/100f);
 						break;
 
+					case TEASE:
+						damage = calculateTeaseDamage(attacker, defender, attackersDamage, damage);
+						break;
+
 					default:
 						if(weapon!=null && !weapon.getWeaponType().isUsingUnarmedCalculation()) {
 							if(weapon.getWeaponType().isMelee()) {
@@ -417,39 +459,7 @@ public enum Attack {
 			}
 			
 		} else {
-			if (attacker!=null) { // Attacker modifiers:
-				damage += attackersDamage * (1 + attacker.getAttributeValue(Attribute.DAMAGE_LUST)/100f);
-				
-				if(defender!=null) {
-					if((attacker.hasTrait(Perk.FEMALE_ATTRACTION, true) && defender.isFeminine())
-							|| (attacker.hasTrait(Perk.MALE_ATTRACTION, true) && !defender.isFeminine())) {
-						damage += attackersDamage * 0.1f;
-					}
-				}
-				if (damage < 1) {
-					damage = 1;
-				}
-				
-			} else {
-				damage = attackersDamage;
-			}
-
-			if (defender!=null && !defender.hasStatusEffect(StatusEffect.DESPERATE_FOR_SEX)) {
-				// Defender modifiers:
-				if(attacker!=null) {
-					if((defender.getSexualOrientation()==SexualOrientation.ANDROPHILIC && attacker.isFeminine())
-							|| (attacker.getSexualOrientation()==SexualOrientation.ANDROPHILIC && defender.isFeminine())) {
-						damage*=0.5f;
-					}
-					if((defender.getSexualOrientation()==SexualOrientation.GYNEPHILIC && !attacker.isFeminine())
-							|| (attacker.getSexualOrientation()==SexualOrientation.GYNEPHILIC && !defender.isFeminine())) {
-						damage*=0.5f;
-					}
-				}
-				if (damage < 1) {
-					damage = 1;
-				}
-			}
+			damage = calculateTeaseDamage(attacker, defender, attackersDamage, damage);
 		}
 		
 		if (attacker!=null && defender!=null) {
