@@ -2,6 +2,7 @@ package com.lilithsthrone.game.dialogue.places.dominion.lilayashome;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.lilithsthrone.game.character.GameCharacter;
 import com.lilithsthrone.game.character.attributes.CorruptionLevel;
@@ -19,20 +20,24 @@ import com.lilithsthrone.game.inventory.InventorySlot;
 import com.lilithsthrone.game.inventory.clothing.AbstractClothing;
 import com.lilithsthrone.game.inventory.clothing.AbstractClothingType;
 import com.lilithsthrone.game.inventory.clothing.ClothingType;
-import com.lilithsthrone.game.sex.managers.dominion.SMPantyMasturbation;
-import com.lilithsthrone.game.sex.managers.universal.SMDoggy;
-import com.lilithsthrone.game.sex.managers.universal.SMMissionary;
-import com.lilithsthrone.game.sex.positions.SexSlotBipeds;
+import com.lilithsthrone.game.sex.SexAreaInterface;
+import com.lilithsthrone.game.sex.SexAreaOrifice;
+import com.lilithsthrone.game.sex.managers.dominion.SMMasturbation;
+import com.lilithsthrone.game.sex.managers.universal.SMAllFours;
+import com.lilithsthrone.game.sex.managers.universal.SMLyingDown;
+import com.lilithsthrone.game.sex.positions.slots.SexSlotAllFours;
+import com.lilithsthrone.game.sex.positions.slots.SexSlotLyingDown;
+import com.lilithsthrone.game.sex.positions.slots.SexSlotMasturbation;
 import com.lilithsthrone.main.Main;
-import com.lilithsthrone.utils.Colour;
 import com.lilithsthrone.utils.Util;
 import com.lilithsthrone.utils.Util.Value;
+import com.lilithsthrone.utils.colours.PresetColour;
 import com.lilithsthrone.world.WorldType;
 import com.lilithsthrone.world.places.PlaceType;
 
 /**
  * @since 0.2.5
- * @version 0.2.5
+ * @version 0.3.5.5
  * @author Innoxia
  */
 public class LilayasRoom {
@@ -52,8 +57,19 @@ public class LilayasRoom {
 		}
 
 		@Override
+		public String getResponseTabTitle(int index) {
+			return LilayaHomeGeneric.getLilayasHouseStandardResponseTabs(index);
+		}
+		
+		@Override
 		public Response getResponse(int responseTab, int index) {
+			if(responseTab==1) {
+				return LilayaHomeGeneric.getLilayasHouseFastTravelResponses(index);
+			}
 			if (index == 1) {
+				if(!Main.game.isExtendedWorkTime()) {
+					return new Response("Lilaya's Room", "The door is firmly shut and locked at the moment...", null);
+				}
 				return new Response("Lilaya's Room", "Have a look around Lilaya's room.", ROOM_LILAYA_INSIDE);
 
 			}  else {
@@ -86,12 +102,12 @@ public class LilayasRoom {
 					@Override
 					public void effects() {
 						List<AbstractClothingType> panties = new ArrayList<>();
-						panties.add(ClothingType.GROIN_LACY_PANTIES);
+						panties.add(ClothingType.getClothingTypeFromId("innoxia_groin_lacy_panties"));
 						panties.add(ClothingType.GROIN_PANTIES);
 						panties.add(ClothingType.GROIN_SHIMAPAN);
 						panties.add(ClothingType.GROIN_CROTCHLESS_PANTIES);
 						
-						lilayasPanties = AbstractClothingType.generateClothing(panties.get(Util.random.nextInt(panties.size())), false);
+						lilayasPanties = Main.game.getItemGen().generateClothing(panties.get(Util.random.nextInt(panties.size())), false);
 					}
 				};
 
@@ -124,10 +140,15 @@ public class LilayasRoom {
 				};
 
 			} else if (index == 1) {
-				return new ResponseSex("Panty Masturbation", "Use Lilaya's panties to help you masturbate",
+				return new ResponseSex("Panty Masturbation", "Use Lilaya's panties to help you masturbate.",
 						true, true,
-						new SMPantyMasturbation(
-								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.MASTURBATING_KNEELING))),
+						new SMMasturbation(
+								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotMasturbation.KNEELING_PANTIES))) {
+							@Override
+							public String applyEndSexEffects() {
+								return Main.game.getPlayer().addClothing(LilayasRoom.lilayasPanties, 1, false, true);
+							}
+						},
 						null,
 						null, PANTIES_POST_MASTURBATION, UtilText.parseFromXMLFile("places/dominion/lilayasHome/lilayasRoom", "PANTIES_MASTURBATION"));
 
@@ -209,7 +230,7 @@ public class LilayasRoom {
 					@Override
 					public void effects() {
 						Main.game.getPlayer().setLocation(WorldType.LILAYAS_HOUSE_FIRST_FLOOR, PlaceType.LILAYA_HOME_ROOM_PLAYER);
-						Main.game.setContent(new Response("", "", Main.game.getPlayer().getLocationPlace().getDialogue(false)));
+						Main.game.setContent(new Response("", "", Main.game.getPlayerCell().getDialogue(false)));
 					}
 				};
 
@@ -257,7 +278,7 @@ public class LilayasRoom {
 						Main.game.getTextStartStringBuilder().append(UtilText.parseFromXMLFile("places/dominion/lilayasHome/lilayasRoom", "CAUGHT_FLEE"));
 						Main.game.getPlayer().setLocation(WorldType.LILAYAS_HOUSE_FIRST_FLOOR, PlaceType.LILAYA_HOME_ROOM_PLAYER);
 						Main.game.getNpc(Rose.class).setLocation(WorldType.LILAYAS_HOUSE_GROUND_FLOOR, PlaceType.LILAYA_HOME_LAB);
-						Main.game.setContent(new Response("", "", Main.game.getPlayer().getLocationPlace().getDialogue(false)));
+						Main.game.setContent(new Response("", "", Main.game.getPlayerCell().getDialogue(false)));
 					}
 				};
 
@@ -297,7 +318,7 @@ public class LilayasRoom {
 						Main.game.getTextStartStringBuilder().append(UtilText.parseFromXMLFile("places/dominion/lilayasHome/lilayasRoom", "APOLOGY_FLEE"));
 						Main.game.getPlayer().setLocation(WorldType.LILAYAS_HOUSE_FIRST_FLOOR, PlaceType.LILAYA_HOME_ROOM_PLAYER);
 						Main.game.getNpc(Rose.class).setLocation(WorldType.LILAYAS_HOUSE_GROUND_FLOOR, PlaceType.LILAYA_HOME_LAB);
-						Main.game.setContent(new Response("", "", Main.game.getPlayer().getLocationPlace().getDialogue(false)));
+						Main.game.setContent(new Response("", "", Main.game.getPlayerCell().getDialogue(false)));
 					}
 				};
 
@@ -326,22 +347,42 @@ public class LilayasRoom {
 						Util.newArrayListOfValues(Fetish.FETISH_SUBMISSIVE),
 						null, CorruptionLevel.THREE_DIRTY, null, null, null,
 						true, false,
-						new SMMissionary(
-								Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Rose.class), SexSlotBipeds.MISSIONARY_KNEELING_BETWEEN_LEGS)),
-								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.MISSIONARY_ON_BACK))) {
+						new SMLyingDown(
+								Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Rose.class), SexSlotLyingDown.MISSIONARY)),
+								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotLyingDown.LYING_DOWN))) {
 							@Override
 							public boolean isPositionChangingAllowed(GameCharacter character) {
 								return false;
 							}
+							@Override
+							public boolean isAbleToRemoveSelfClothing(GameCharacter character) {
+								return !character.isPlayer();
+							}
+							@Override
+							public  boolean isAbleToRemoveOthersClothing(GameCharacter character, AbstractClothing clothing) {
+								return !character.isPlayer();
+							}
+							@Override
+							public Map<GameCharacter, List<SexAreaInterface>> getAreasBannedMap() {
+								return Util.newHashMapOfValues(
+										new Value<>(
+												Main.game.getNpc(Rose.class),
+												Util.newArrayListOfValues(
+														SexAreaOrifice.VAGINA,
+														SexAreaOrifice.ANUS,
+														SexAreaOrifice.MOUTH)));
+							}
 						},
 						null,
-						null, AFTER_ROSE_AS_DOM, UtilText.parseFromXMLFile("places/dominion/lilayasHome/lilayasRoom", "ROSE_AS_DOM")){
+						null,
+						AFTER_ROSE_AS_DOM,
+						UtilText.parseFromXMLFile("places/dominion/lilayasHome/lilayasRoom", "ROSE_AS_DOM")){
 					@Override
 					public void effects() {
 						Main.game.getTextEndStringBuilder().append(Main.game.getNpc(Rose.class).incrementAffection(Main.game.getPlayer(), 15));
 						Main.game.getNpc(Rose.class).unequipClothingIntoVoid(Main.game.getNpc(Rose.class).getClothingInSlot(InventorySlot.GROIN), true, Main.game.getNpc(Rose.class));
-						Main.game.getNpc(Rose.class).displaceClothingForAccess(CoverableArea.PENIS);
-						Main.game.getNpc(Rose.class).equipClothingFromNowhere(AbstractClothingType.generateClothing(ClothingType.BDSM_PENIS_STRAPON, Colour.CLOTHING_PURPLE_DARK, false), true, Main.game.getNpc(Rose.class));
+						Main.game.getNpc(Rose.class).displaceClothingForAccess(CoverableArea.PENIS, null);
+						Main.game.getNpc(Rose.class).equipClothingFromNowhere(Main.game.getItemGen().generateClothing("innoxia_bdsm_penis_strapon", PresetColour.CLOTHING_PURPLE_DARK, false), true, Main.game.getNpc(Rose.class));
 					}
 				};
 					
@@ -353,7 +394,7 @@ public class LilayasRoom {
 						Main.game.getTextStartStringBuilder().append(UtilText.parseFromXMLFile("places/dominion/lilayasHome/lilayasRoom", "BEG_FLEE"));
 						Main.game.getPlayer().setLocation(WorldType.LILAYAS_HOUSE_FIRST_FLOOR, PlaceType.LILAYA_HOME_ROOM_PLAYER);
 						Main.game.getNpc(Rose.class).setLocation(WorldType.LILAYAS_HOUSE_GROUND_FLOOR, PlaceType.LILAYA_HOME_LAB);
-						Main.game.setContent(new Response("", "", Main.game.getPlayer().getLocationPlace().getDialogue(false)));
+						Main.game.setContent(new Response("", "", Main.game.getPlayerCell().getDialogue(false)));
 					}
 				};
 
@@ -378,7 +419,8 @@ public class LilayasRoom {
 					public void effects() {
 						Main.game.getPlayer().setLocation(WorldType.LILAYAS_HOUSE_FIRST_FLOOR, PlaceType.LILAYA_HOME_ROOM_PLAYER);
 						Main.game.getNpc(Rose.class).setLocation(WorldType.LILAYAS_HOUSE_GROUND_FLOOR, PlaceType.LILAYA_HOME_LAB);
-						Main.game.setContent(new Response("", "", Main.game.getPlayer().getLocationPlace().getDialogue(false)));
+						Main.game.getNpc(Rose.class).equipClothing();
+						Main.game.setContent(new Response("", "", Main.game.getPlayerCell().getDialogue(false)));
 					}
 				};
 
@@ -409,7 +451,7 @@ public class LilayasRoom {
 						Main.game.getDialogueFlags().setFlag(DialogueFlagValue.roseToldOnYou, true);
 						Main.game.getPlayer().setLocation(WorldType.LILAYAS_HOUSE_FIRST_FLOOR, PlaceType.LILAYA_HOME_ROOM_PLAYER);
 						Main.game.getNpc(Rose.class).setLocation(WorldType.LILAYAS_HOUSE_GROUND_FLOOR, PlaceType.LILAYA_HOME_LAB);
-						Main.game.setContent(new Response("", "", Main.game.getPlayer().getLocationPlace().getDialogue(false)));
+						Main.game.setContent(new Response("", "", Main.game.getPlayerCell().getDialogue(false)));
 					}
 				};
 
@@ -436,7 +478,7 @@ public class LilayasRoom {
 //					public void effects() {
 //						Main.game.getNpc(Rose.class).unequipClothingIntoVoid(Main.game.getNpc(Rose.class).getClothingInSlot(InventorySlot.GROIN), true, Main.game.getNpc(Rose.class));
 //						Main.game.getNpc(Rose.class).displaceClothingForAccess(CoverableArea.PENIS);
-//						Main.game.getNpc(Rose.class).equipClothingFromNowhere(AbstractClothingType.generateClothing(ClothingType.BDSM_PENIS_STRAPON, Colour.CLOTHING_PURPLE_DARK, false), true, Main.game.getNpc(Rose.class));
+//						Main.game.getNpc(Rose.class).equipClothingFromNowhere(Main.game.getItemGeneration().generateClothing(ClothingType.BDSM_PENIS_STRAPON, PresetColour.CLOTHING_PURPLE_DARK, false), true, Main.game.getNpc(Rose.class));
 //					}
 //				};
 //					
@@ -465,7 +507,7 @@ public class LilayasRoom {
 						Main.game.getPlayer().setLocation(WorldType.LILAYAS_HOUSE_FIRST_FLOOR, PlaceType.LILAYA_HOME_ROOM_PLAYER);
 						Main.game.getNpc(Lilaya.class).setLocation(WorldType.LILAYAS_HOUSE_GROUND_FLOOR, PlaceType.LILAYA_HOME_LAB);
 						Main.game.getNpc(Rose.class).setLocation(WorldType.LILAYAS_HOUSE_GROUND_FLOOR, PlaceType.LILAYA_HOME_LAB);
-						Main.game.setContent(new Response("", "", Main.game.getPlayer().getLocationPlace().getDialogue(false)));
+						Main.game.setContent(new Response("", "", Main.game.getPlayerCell().getDialogue(false)));
 					}
 				};
 
@@ -492,11 +534,11 @@ public class LilayasRoom {
 			if(index==1) {
 				return new ResponseSex("Sex", "Have dominant sex with Rose and Lilaya.",
 						true, false,
-						new SMDoggy(
-								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.DOGGY_BEHIND)),
+						new SMAllFours(
+								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotAllFours.BEHIND)),
 								Util.newHashMapOfValues(
-										new Value<>(Main.game.getNpc(Lilaya.class), SexSlotBipeds.DOGGY_ON_ALL_FOURS),
-										new Value<>(Main.game.getNpc(Rose.class), SexSlotBipeds.DOGGY_ON_ALL_FOURS_SECOND))) {
+										new Value<>(Main.game.getNpc(Lilaya.class), SexSlotAllFours.ALL_FOURS),
+										new Value<>(Main.game.getNpc(Rose.class), SexSlotAllFours.ALL_FOURS_TWO))) {
 							@Override
 							public boolean isPositionChangingAllowed(GameCharacter character) {
 								return false;
@@ -513,7 +555,7 @@ public class LilayasRoom {
 						Main.game.getPlayer().setLocation(WorldType.LILAYAS_HOUSE_FIRST_FLOOR, PlaceType.LILAYA_HOME_ROOM_PLAYER);
 						Main.game.getNpc(Lilaya.class).setLocation(WorldType.LILAYAS_HOUSE_GROUND_FLOOR, PlaceType.LILAYA_HOME_LAB);
 						Main.game.getNpc(Rose.class).setLocation(WorldType.LILAYAS_HOUSE_GROUND_FLOOR, PlaceType.LILAYA_HOME_LAB);
-						Main.game.setContent(new Response("", "", Main.game.getPlayer().getLocationPlace().getDialogue(false)));
+						Main.game.setContent(new Response("", "", Main.game.getPlayerCell().getDialogue(false)));
 					}
 				};
 
@@ -544,7 +586,7 @@ public class LilayasRoom {
 						Main.game.getPlayer().setLocation(WorldType.LILAYAS_HOUSE_FIRST_FLOOR, PlaceType.LILAYA_HOME_ROOM_PLAYER);
 						Main.game.getNpc(Lilaya.class).setLocation(WorldType.LILAYAS_HOUSE_GROUND_FLOOR, PlaceType.LILAYA_HOME_LAB);
 						Main.game.getNpc(Rose.class).setLocation(WorldType.LILAYAS_HOUSE_GROUND_FLOOR, PlaceType.LILAYA_HOME_LAB);
-						Main.game.setContent(new Response("", "", Main.game.getPlayer().getLocationPlace().getDialogue(false)));
+						Main.game.setContent(new Response("", "", Main.game.getPlayerCell().getDialogue(false)));
 					}
 				};
 

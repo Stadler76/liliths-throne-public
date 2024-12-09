@@ -4,13 +4,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
+import com.lilithsthrone.game.character.GameCharacter;
+import com.lilithsthrone.game.character.effects.AbstractPerk;
+import com.lilithsthrone.game.character.effects.PerkCategory;
+import com.lilithsthrone.game.character.effects.PerkManager;
+import com.lilithsthrone.game.character.effects.TreeEntry;
 import com.lilithsthrone.game.dialogue.DialogueNode;
 import com.lilithsthrone.game.dialogue.responses.Response;
 import com.lilithsthrone.game.dialogue.utils.MapTravelType;
 import com.lilithsthrone.main.Main;
+import com.lilithsthrone.world.AbstractWorldType;
 import com.lilithsthrone.world.Cell;
 import com.lilithsthrone.world.WorldType;
 import com.lilithsthrone.world.places.PlaceType;
@@ -22,17 +29,19 @@ import com.lilithsthrone.world.places.PlaceType;
  * It was useful later on.
  * 
  * @since 0.1.0
- * @version 0.3.1
+ * @version 0.3.7.3
  * @author Innoxia
  */
 public class Pathing {
 	
 	private static List<Cell> pathingCells = new ArrayList<>();
 	private static Vector2i endPoint = new Vector2i(0, 0);
-	private static WorldType destinationWorld = WorldType.DOMINION;
+	private static AbstractWorldType destinationWorld = WorldType.DOMINION;
 	
 	private static int travelTime = 0;
 	private static int dangerousTiles = 0;
+
+	private static boolean impossibleDestination = true;
 	
 	private static MapTravelType mapTravelType = MapTravelType.WALK_SAFE;
 
@@ -86,7 +95,8 @@ public class Pathing {
 		 * That is your path.
 		 */
 		List<Cell> path = new ArrayList<>();
-
+		impossibleDestination = true;
+		
 		Node[][] nodeArray = new Node[grid.length][grid[0].length];
 		for (int i = 0; i < grid.length; i++) {
 			for (int j = 0; j < grid[0].length; j++) {
@@ -117,24 +127,31 @@ public class Pathing {
 			
 			// 2) d) i)
 			if (n.getX() == endX && n.getY() == endY) {
+				impossibleDestination = false;
 				break;
 			}
 
 			// 2) c)
 			for (int i = -1; i <= 1; i++) {
 				for (int j = -1; j <= 1; j++) {
-					if (!(i == 0 && j == 0) && n.getX() + i >= 0 && n.getX() + i < grid.length && n.getY() + j >= 0 && n.getY() + j < grid[0].length) { // Make sure we don't go out of bounds
+					if (!(i == 0 && j == 0) // Do not calculate the current tile
+							// Make sure we don't go out of bounds:
+							&& n.getX() + i >= 0
+							&& n.getX() + i < grid.length
+							&& n.getY() + j >= 0
+							&& n.getY() + j < grid[0].length) { 
 						if (!closedList.contains(nodeArray[n.getX() + i][n.getY() + j])) { // c) i)
 							// Deny diagonals unless in main world map
 							Cell c = grid[n.getX() + i][n.getY() + j];
-							
-							int time = Main.game.getModifierTravelTime(c.getPlace().getPlaceType().isLand(), (c.getPlace().getPlaceType().getDialogue(false)!=null? c.getPlace().getPlaceType().getDialogue(false).getSecondsPassed() : 10000));
+
+							int time = Main.game.getModifierTravelTime(c.getPlace().getPlaceType().isLand(), (c.getDialogue(false)!=null? c.getDialogue(false).getSecondsPassed() : 10000));
 							
 							int g = ((i == 0 || j == 0) ? 10 : c.getType().equals(WorldType.WORLD_MAP)?12:1_000_000)
 									+ time
 									+ (c.getPlace().getPlaceType().equals(PlaceType.GENERIC_IMPASSABLE)?100_000_000:0)
 									+ (preferSafe && c.getPlace().getPlaceType()!=null && c.getPlace().getPlaceType().isDangerous()?100_000:0);
-
+							
+							
 							if (!openList.contains(nodeArray[n.getX() + i][n.getY() + j])) { // c) ii)
 								nodeArray[n.getX() + i][n.getY() + j].setParent(n);
 								nodeArray[n.getX() + i][n.getY() + j].setG(n.getG() + g);
@@ -178,7 +195,7 @@ public class Pathing {
 		int totalTimePassed = 0;
 		for(Cell c : getPathingCells()) {
 			Main.game.getPlayer().setLocation(c.getType(), c.getLocation(), false);
-			DialogueNode dialogue = c.getPlace().getDialogue(true);
+			DialogueNode dialogue = c.getDialogue(true);
 			
 			if(dialogue!=null) {
 				totalTimePassed += Main.game.getModifierTravelTime(c.getPlace().getPlaceType().isLand(), dialogue.getSecondsPassed());
@@ -206,7 +223,9 @@ public class Pathing {
 				}
 				
 				if(totalTimePassed>=2*60*60) { // Every 2 hours, perform an end turn. I didn't encounter any lag when just ending the turn on every tile moved, but I'm sure it could lag when moving huge distances.
+					Main.game.getPlayer().setActive(false);
 					Main.game.endTurn(totalTimePassed);
+					Main.game.getPlayer().setActive(true);
 					totalTimePassed = 0;
 				}
 			}
@@ -216,17 +235,15 @@ public class Pathing {
 		Cell destination = getPathingCells().get(getPathingCells().size()-1);
 		Main.game.getPlayer().setLocation(destination.getType(), destination.getLocation(), false);
 
-		int time = totalTimePassed;
-		return new Response("", "", destination.getPlace().getDialogue(false)) {
-			@Override
-			public int getSecondsPassed() {
-				return time;
-			}
-		};
+		Main.game.getPlayer().setActive(false);
+		Main.game.endTurn(totalTimePassed);
+		Main.game.getPlayer().setActive(true);
+
+		return new Response("", "", destination.getDialogue(false));
 	}
 	
 	public static void initPathingVariables() {
-		if(!getMapTravelType().isAvailable(Main.game.getPlayer())) {
+		if(!getMapTravelType().isAvailable(null, Main.game.getPlayer())) {
 			setMapTravelType(MapTravelType.WALK_SAFE);
 		}
 		setPathingCells(new ArrayList<>(), new Vector2i(-1, -1));//new Vector2i(Main.game.getPlayer().getLocation()));
@@ -258,7 +275,7 @@ public class Pathing {
 	private static int calculateTravelTime(List<Cell> cellRoute, boolean withModifiedTravelTime) {
 		int seconds = 0;
 		for(Cell c : cellRoute) {
-			DialogueNode dialogue = c.getPlace().getDialogue(false);
+			DialogueNode dialogue = c.getDialogue(false);
 			if(dialogue!=null) {
 				if(withModifiedTravelTime) {
 					seconds += Main.game.getModifierTravelTime(c.getPlace().getPlaceType().isLand(), dialogue.getSecondsPassed());
@@ -284,7 +301,7 @@ public class Pathing {
 	 * @param endPoint New endPoint.
 	 * @param worldForRecalculatingFlyTime Pass in null if you don't want to recalculate the flight time.
 	 */
-	public static void setEndPoint(Vector2i endPoint, Cell cell, WorldType worldForRecalculatingFlyTime) {
+	public static void setEndPoint(Vector2i endPoint, Cell cell, AbstractWorldType worldForRecalculatingFlyTime) {
 		Pathing.endPoint = endPoint;
 		if(worldForRecalculatingFlyTime!=null) {
 			List<Cell> route = Pathing.aStarPathing(Main.game.getWorlds().get(worldForRecalculatingFlyTime).getCellGrid(), Main.game.getPlayer().getLocation(), endPoint, false);
@@ -318,8 +335,149 @@ public class Pathing {
 		return travelTime;
 	}
 
-	public static WorldType getDestinationWorld() {
+	public static AbstractWorldType getDestinationWorld() {
 		return destinationWorld;
 	}
 
+	/**
+	 * @return true if the last calculated aStarPathing did not reach its destination.
+	 */
+	public static boolean isImpossibleDestination() {
+		return impossibleDestination;
+	}
+
+	public static List<TreeEntry<PerkCategory, AbstractPerk>> aStarPathingPerkTree(GameCharacter character, TreeEntry<PerkCategory, AbstractPerk> destination) {
+		List<TreeEntry<PerkCategory, AbstractPerk>> startingPerks = PerkManager.getStartingPerks(character);
+		
+		// Set starting point to the same category as the destination, if available:
+		TreeEntry<PerkCategory, AbstractPerk> start = startingPerks.get(0);
+		for(TreeEntry<PerkCategory, AbstractPerk> perk : startingPerks) {
+			if(perk.getCategory()==destination.getCategory()) {
+				start = perk;
+			}
+		}
+		
+		return  aStarPathingPerkTree(
+						PerkManager.MANAGER.getPerkTree(character),
+						start,
+						destination);
+	}
+	
+	public static List<TreeEntry<PerkCategory, AbstractPerk>> aStarPathingPerkTree(
+			Map<Integer, Map<PerkCategory, List<TreeEntry<PerkCategory, AbstractPerk>>>> perkTree,
+			TreeEntry<PerkCategory, AbstractPerk> start,
+			TreeEntry<PerkCategory, AbstractPerk> destination) {
+
+		List<TreeEntry<PerkCategory, AbstractPerk>> perkList = new ArrayList<>();
+		
+		for(Map<PerkCategory, List<TreeEntry<PerkCategory, AbstractPerk>>> entry1 : perkTree.values()) {
+			for(List<TreeEntry<PerkCategory, AbstractPerk>> entry2 : entry1.values()) {
+				for(TreeEntry<PerkCategory, AbstractPerk> entry3 : entry2) {
+					if(entry3.getRow()>0) {
+						perkList.add(entry3);
+					}
+				}
+			}
+		}
+		
+		List<TreeEntry<PerkCategory, AbstractPerk>> path = new ArrayList<>();
+		
+		List<PerkNode> nodeArray = new ArrayList<>();
+		PerkNode startNode = null;
+		for (int i = 0; i < perkList.size(); i++) {
+			PerkNode createdNode = new PerkNode(null, perkList.get(i), 0, 0, 0);
+			if(perkList.get(i).equals(start)) {
+				startNode = createdNode;
+			}
+			nodeArray.add(createdNode);
+//			System.out.println("Added:: "+perkList.get(i).getEntry().getName(null));
+		}
+		
+		Queue<PerkNode> openList = new PriorityQueue<>(10, new Comparator<PerkNode>() {
+			@Override
+			// Sort by F value
+			public int compare(PerkNode o1, PerkNode o2) {
+				return o1.getF() - o2.getF();
+			}
+		});
+		List<PerkNode> closedList = new ArrayList<>();
+
+		// 1)
+		openList.add(startNode);//nodeArray.get(0));
+
+		PerkNode n = null;
+		PerkNode destinationNode = null;
+		// 2) d) ii)
+		while (!openList.isEmpty()) {
+			// 2) a) Priority queue always gives the lowest F cost square
+			n = openList.poll();
+
+			// 2) b)
+			closedList.add(n);
+
+			// 2) d) i)
+//			if (n.getPerkTreeEntry().equals(destination)) {
+			if(n.getPerkTreeEntry().equals(destination)) {
+				destinationNode = n;
+				break;
+			}
+
+			// 2) c)
+			for(TreeEntry<PerkCategory, AbstractPerk> link : Util.mergeLists(n.getPerkTreeEntry().getSiblingLinks(), n.getPerkTreeEntry().getChildLinks())) {
+				boolean containsLink = false;
+				PerkNode closedNode = null;
+				for(PerkNode node : closedList) {
+					if(node.getPerkTreeEntry().equals(link)) {
+						containsLink = true;
+						break;
+					}
+				}
+				for(PerkNode node : nodeArray) {
+					if(node.getPerkTreeEntry().equals(link)) {
+						closedNode = node;
+						break;
+					}
+				}
+//				if(closedNode!=null) {
+				if(!containsLink) { // c) i)
+					int g = 1;
+
+					if (!openList.contains(closedNode)) { // c) ii)
+						closedNode.setParent(n);
+						closedNode.setG(n.getG() + g);
+						closedNode.setH(1); //0?
+						closedNode.setF();
+
+						openList.add(closedNode);
+						
+					} else { // c) iii)
+						if ((n.getG() + g) < closedNode.getG()) {
+							openList.remove(closedNode);
+
+							closedNode.setParent(n);
+							closedNode.setG(n.getG() + g);
+							closedNode.setF();
+
+							openList.add(closedNode);
+						}
+					}
+				}
+//				}
+			}
+		}
+
+		// 3)
+		n = destinationNode;
+		path.add(n.getPerkTreeEntry());
+		while(n.getParent() != null) {
+			path.add(n.getParent().getPerkTreeEntry());
+			n = n.getParent();
+		}
+		Collections.reverse(path);
+		
+//		for(TreeEntry<PerkCategory, AbstractPerk> link : path) {
+//			System.out.println(link.getEntry().getName(null)+", "+link.getRow()+", "+link.getCategory());
+//		}
+		return path;
+	}
 }

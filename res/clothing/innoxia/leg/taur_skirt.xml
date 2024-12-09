@@ -12,7 +12,7 @@
 		
 		<description><![CDATA[A specially-designed skirt, suitable to be fit onto the lower body of any taur race.]]></description> 
 		
-		<physicalResistance>1</physicalResistance> 
+		<physicalResistance>0</physicalResistance> 
 		
 		<femininity>FEMININE</femininity> 
 		
@@ -101,7 +101,7 @@
 
   <displacementText type="REMOVE_OR_EQUIP">
     <self>
-      <![CDATA[[npc.Name] [npc.verb(take)] hold of [npc.her] taur-skirt, before pulling it up and over [npc2.her] head.]]>
+      <![CDATA[[npc.Name] [npc.verb(take)] hold of [npc.her] taur-skirt, before pulling it up and over [npc.her] head.]]>
     </self>
     <other>
       <![CDATA[[npc.Name] [npc.verb(take)] hold of [npc2.namePos] taur-skirt, before pulling it up and over [npc2.her] head.]]>

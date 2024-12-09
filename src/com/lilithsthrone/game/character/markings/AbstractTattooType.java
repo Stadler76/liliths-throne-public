@@ -10,22 +10,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
+import com.lilithsthrone.main.Main;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.lilithsthrone.game.character.GameCharacter;
+import com.lilithsthrone.game.dialogue.utils.UtilText;
 import com.lilithsthrone.game.inventory.AbstractCoreType;
 import com.lilithsthrone.game.inventory.InventorySlot;
 import com.lilithsthrone.game.inventory.enchanting.AbstractItemEffectType;
 import com.lilithsthrone.game.inventory.enchanting.ItemEffectType;
-import com.lilithsthrone.utils.Colour;
-import com.lilithsthrone.utils.ColourListPresets;
 import com.lilithsthrone.utils.SvgUtil;
 import com.lilithsthrone.utils.Util;
+import com.lilithsthrone.utils.colours.Colour;
+import com.lilithsthrone.utils.colours.ColourListPresets;
+import com.lilithsthrone.utils.colours.PresetColour;
 
 /**
  * @since 0.2.6
@@ -39,8 +39,9 @@ public class AbstractTattooType extends AbstractCoreType {
 	private boolean isMod;
 	
 	private int value;
-	
-	private int enchantmentLimit;
+
+	@SuppressWarnings("unused")
+	private int enchantmentLimit; // Removed as part of 0.3.3.7's update to add enchantment capacity mechanics.
 	
 	private List<InventorySlot> slotAvailability;
 
@@ -53,6 +54,8 @@ public class AbstractTattooType extends AbstractCoreType {
 	
 	private String pathName;
 	private Map<Colour, Map<Colour, Map<Colour, String>>> SVGStringMap;
+
+	private String availabilityRequirements;
 	
 	public AbstractTattooType(
 			String pathName,
@@ -75,7 +78,7 @@ public class AbstractTattooType extends AbstractCoreType {
 		
 		this.availablePrimaryColours = new ArrayList<>();
 		if (availablePrimaryColours == null) {
-			this.availablePrimaryColours.add(Colour.CLOTHING_BLACK);
+			this.availablePrimaryColours.add(PresetColour.CLOTHING_BLACK);
 		} else {
 			this.availablePrimaryColours.addAll(availablePrimaryColours);
 		}
@@ -105,9 +108,7 @@ public class AbstractTattooType extends AbstractCoreType {
 
 		if (tattooXMLFile.exists()) {
 			try {
-				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-				Document doc = dBuilder.parse(tattooXMLFile);
+				Document doc = Main.getDocBuilder().parse(tattooXMLFile);
 				
 				// Cast magic:
 				doc.getDocumentElement().normalize();
@@ -142,6 +143,11 @@ public class AbstractTattooType extends AbstractCoreType {
 				this.pathName = tattooXMLFile.getParentFile().getAbsolutePath() + "/" + coreAttributes.getElementsByTagName("imageName").item(0).getTextContent();
 				this.name = coreAttributes.getElementsByTagName("name").item(0).getTextContent();
 				this.description = coreAttributes.getElementsByTagName("description").item(0).getTextContent();
+
+				try {
+					this.availabilityRequirements = coreAttributes.getElementsByTagName("availabilityRequirements").item(0).getTextContent();
+				} catch(Exception ex) {
+				}
 				
 				try {
 					enchantmentLimit = Integer.valueOf(coreAttributes.getElementsByTagName("enchantmentLimit").item(0).getTextContent());
@@ -191,7 +197,7 @@ public class AbstractTattooType extends AbstractCoreType {
 			NodeList coloursNodeList = coloursElement.getElementsByTagName("colour");
 			List<Colour> result = new ArrayList<>(coloursNodeList.getLength());
 			for(int i = 0; i < coloursNodeList.getLength(); i++){
-				result.add(Colour.valueOf(((Element)coloursNodeList.item(i)).getTextContent()));
+				result.add(PresetColour.getColourFromId(((Element)coloursNodeList.item(i)).getTextContent()));
 			}
 			return result;
 		}
@@ -266,12 +272,19 @@ public class AbstractTattooType extends AbstractCoreType {
 		return slotAvailability;
 	}
 	
+	public boolean isAvailable(GameCharacter target) {
+		if(availabilityRequirements!=null && !availabilityRequirements.isEmpty()) {
+			return Boolean.valueOf(UtilText.parse(target, ("[#"+availabilityRequirements+"]").replaceAll("\u200b", "")));
+		}
+		return true;
+	}
+	
 	public String getId() {
 		return TattooType.getIdFromTattooType(this);
 	}
 	
 	public int getEnchantmentLimit() {
-		return enchantmentLimit;
+		return 100;
 	}
 	
 	public AbstractItemEffectType getEnchantmentEffect() {

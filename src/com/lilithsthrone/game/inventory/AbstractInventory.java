@@ -1,6 +1,12 @@
 package com.lilithsthrone.game.inventory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -20,6 +26,12 @@ class AbstractInventory<T extends AbstractCoreItem, U extends AbstractCoreType> 
 		duplicateCounts = new LinkedHashMap<>();
 	}
 
+	AbstractInventory(AbstractInventory<T, U> inventoryToCopy) {
+		this.comparator = inventoryToCopy.comparator;
+		this.typeRetriever = inventoryToCopy.typeRetriever;
+		duplicateCounts = new LinkedHashMap<>(inventoryToCopy.duplicateCounts);
+	}
+	
 	public void clear() {
 		duplicateCounts.clear();
 	}
@@ -105,8 +117,20 @@ class AbstractInventory<T extends AbstractCoreItem, U extends AbstractCoreType> 
 		return duplicateCounts.keySet().stream().filter(item -> typeRetriever.apply(item).equals(type)).findAny();
 	}
 
+	private Optional<T> getItemByRarity(Rarity rarity) {
+		return duplicateCounts.keySet().stream().filter(item -> typeRetriever.apply(item).getRarity().equals(rarity)).findAny();
+	}
+
 	boolean hasItemType(U itemType) {
 		return getItemByType(itemType).isPresent();
+	}
+
+	boolean removeAllItemsByRarity(Rarity rarity) {
+		boolean removed = getItemByRarity(rarity).map(this::removeItem).orElse(false);
+		while(removed) {
+			removed = getItemByRarity(rarity).map(this::removeItem).orElse(false);
+		}
+		return removed;
 	}
 
 	boolean removeItemByType(U itemType) {

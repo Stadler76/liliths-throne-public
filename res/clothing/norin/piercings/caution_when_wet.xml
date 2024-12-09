@@ -19,7 +19,7 @@
     <imageEquippedName/> <!-- The file path for this clothing's image while equipped -->
     <enchantmentLimit/> <!-- Custom values override game -->
     <effects>
-      <effect itemEffectType="CLOTHING" limit="0" potency="MINOR_BOOST" primaryModifier="CLOTHING_SEALING" secondaryModifier="ARCANE_BOOST" timer="31"/>
+      <effect itemEffectType="CLOTHING" limit="0" potency="MINOR_BOOST" primaryModifier="CLOTHING_SPECIAL" secondaryModifier="CLOTHING_SEALING" timer="31"/>
       <effect itemEffectType="CLOTHING" limit="7" potency="MAJOR_BOOST" primaryModifier="TF_VAGINA" secondaryModifier="TF_MOD_WETNESS" timer="31"/>
       <effect itemEffectType="CLOTHING" limit="7" potency="MAJOR_BOOST" primaryModifier="TF_ASS" secondaryModifier="TF_MOD_WETNESS" timer="31"/>
     </effects> <!-- Default enchantments -->
@@ -42,8 +42,8 @@
     
     <incompatibleSlots/> <!-- slot(s) not compatible -->
 
-    <!-- colourList presets: https://github.com/Innoxia/liliths-throne-public/blob/master/src/com/lilithsthrone/utils/ColourListPresets.java -->
-    <!-- Colour values: https://github.com/Innoxia/liliths-throne-public/blob/master/src/com/lilithsthrone/utils/Colour.java -->
+    <!-- colourList presets: https://github.com/Innoxia/liliths-throne-public/blob/dev/src/com/lilithsthrone/utils/colours/ColourListPresets.java -->
+    <!-- Colour values: https://github.com/Innoxia/liliths-throne-public/blob/dev/src/com/lilithsthrone/utils/colours/PresetColour.java -->
     <primaryColours values="ALL_METAL"/>
     <primaryColoursDye values="ALL_METAL"/>
     <secondaryColours>

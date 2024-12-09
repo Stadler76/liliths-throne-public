@@ -1,64 +1,104 @@
 package com.lilithsthrone.game.dialogue.places.dominion.shoppingArcade;
 
+import java.util.List;
+
 import com.lilithsthrone.game.PropertyValue;
+import com.lilithsthrone.game.character.GameCharacter;
 import com.lilithsthrone.game.character.attributes.Attribute;
+import com.lilithsthrone.game.character.effects.PerkCategory;
+import com.lilithsthrone.game.character.effects.StatusEffect;
 import com.lilithsthrone.game.character.npc.dominion.Pix;
 import com.lilithsthrone.game.dialogue.DialogueFlagValue;
 import com.lilithsthrone.game.dialogue.DialogueNode;
 import com.lilithsthrone.game.dialogue.responses.Response;
-import com.lilithsthrone.game.dialogue.responses.ResponseEffectsOnly;
 import com.lilithsthrone.game.dialogue.responses.ResponseSex;
 import com.lilithsthrone.game.dialogue.utils.UtilText;
 import com.lilithsthrone.game.sex.managers.dominion.SMPixShowerTime;
-import com.lilithsthrone.game.sex.managers.universal.SMFaceToWall;
-import com.lilithsthrone.game.sex.positions.SexSlotBipeds;
+import com.lilithsthrone.game.sex.managers.universal.SMAgainstWall;
+import com.lilithsthrone.game.sex.positions.AbstractSexPosition;
+import com.lilithsthrone.game.sex.positions.SexPosition;
+import com.lilithsthrone.game.sex.positions.slots.SexSlotAgainstWall;
+import com.lilithsthrone.game.sex.positions.slots.SexSlotUnique;
 import com.lilithsthrone.main.Main;
-import com.lilithsthrone.utils.Colour;
+import com.lilithsthrone.utils.Units;
 import com.lilithsthrone.utils.Util;
 import com.lilithsthrone.utils.Util.Value;
-import com.lilithsthrone.world.WorldType;
-import com.lilithsthrone.world.places.PlaceType;
+import com.lilithsthrone.utils.colours.PresetColour;
 
 /**
  * @since 0.1.66
- * @version 0.1.85
+ * @version 0.4
  * @author Innoxia
  */
 public class PixsPlayground {
 	
+	private static String PERK_PROGRESS_ID = "gym_perk_progress";
+	
 	private static final int SINGLE_PAYMENT_VALUE = 100;
 	private static final int MEMBERSHIP_VALUE = 8000;
 	
+	private static boolean savedCardioEnergy;
+	private static boolean savedWeightsEnergy;
+	
+	private static final int STATUS_EFFECT_SECONDS = 6 * 60 * 60;
+	
+	private static boolean isExhausted() {
+		return Main.game.getPlayer().hasStatusEffect(StatusEffect.GYM_FATIGUE);
+	}
+	
+	private static void incrementPerkProgress(long increment) {
+		if(!Main.game.getDialogueFlags().hasSavedLong(PERK_PROGRESS_ID)) {
+			Main.game.getDialogueFlags().setSavedLong(PERK_PROGRESS_ID, 0);
+		}
+		Main.game.getDialogueFlags().incrementSavedLong(PERK_PROGRESS_ID, increment);
+		if(Main.game.getDialogueFlags().getSavedLong(PERK_PROGRESS_ID)>=100) {
+			Main.game.getPlayer().incrementPerkCategoryPoints(PerkCategory.PHYSICAL, 1);
+		}
+	}
+	
+	private static void handlePerkProgressReset() {
+		if(!Main.game.getDialogueFlags().hasSavedLong(PERK_PROGRESS_ID)) {
+			Main.game.getDialogueFlags().setSavedLong(PERK_PROGRESS_ID, 0);
+		}
+		if(Main.game.getDialogueFlags().getSavedLong(PERK_PROGRESS_ID)>=100) {
+			Main.game.getDialogueFlags().setSavedLong(PERK_PROGRESS_ID, 0);
+		}
+	}
+	
+	private static String getPerkProgressString(int incremented) {
+		UtilText.addSpecialParsingString(String.valueOf(incremented), true);
+		if(Main.game.getDialogueFlags().getSavedLong(PERK_PROGRESS_ID)>=100) {
+			return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "PERK_PROGRESS_COMPLETE");
+			
+		} else {
+			UtilText.addSpecialParsingString(String.valueOf(Main.game.getDialogueFlags().getSavedLong(PERK_PROGRESS_ID)), false);
+			return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "PERK_PROGRESS");
+		}
+	}
+	
 	private static Response getResponseGym(int index) {
 		if (index == 1) {
-			if (Main.game.getPlayer().getHealthPercentage() < 0.4f) {
+			if (isExhausted()) {
 				return new Response("Cardio", "You are too tired to do any more exercise!", null);
 				
 			} else {
 				return new Response("Cardio", "Use the running and cycling machines to burn off some of your body size.", GYM_CARDIO){
 					@Override
 					public void effects(){
-						Main.game.getPlayer().incrementHealth(-Main.game.getPlayer().getAttributeValue(Attribute.HEALTH_MAXIMUM) * 0.4f);
-						Main.game.getTextEndStringBuilder().append(
-//								Main.game.getPlayer().incrementAttribute(Attribute.MAJOR_PHYSIQUE, 0.25f)+ 
-								"<p style='text-align:center'>[style.boldBad(-5)] <b style='color:"+Colour.BODY_SIZE_THREE.toWebHexString()+";'>Body Size</b></p>"
-								+Main.game.getPlayer().incrementBodySize(-5));
+						handlePerkProgressReset();
 					}
 				};
 			}
 
 		} else if (index == 2) {
-			if (Main.game.getPlayer().getHealthPercentage() < 0.4f) {
+			if (isExhausted()) {
 				return new Response("Weights", "You are too tired to do any more exercise!", null);
 				
 			} else {
 				return new Response("Weights", "Use the free weights and exercise machines to build up your strength.", GYM_WEIGHTS){
 					@Override
 					public void effects(){
-						Main.game.getPlayer().incrementHealth(-Main.game.getPlayer().getAttributeValue(Attribute.HEALTH_MAXIMUM) * 0.4f);
-						Main.game.getTextEndStringBuilder().append(
-								"<p style='text-align:center'>[style.boldGood(+5)] <b style='color:"+Colour.MUSCLE_THREE.toWebHexString()+";'>Muscle Definition</b></p>"
-								+Main.game.getPlayer().incrementMuscle(5));
+						handlePerkProgressReset();
 					}
 				};
 			}
@@ -67,7 +107,7 @@ public class PixsPlayground {
 				if(!Main.game.getDialogueFlags().values.contains(DialogueFlagValue.gymIsMember)) {
 					return new Response("Pix", "Only lifetime members can get personal training from Pix.", null);
 					
-				} else if (Main.game.getPlayer().getHealthPercentage() < 0.8f) {
+				} else if (isExhausted()) {
 					return new Response("Pix", "You are too tired to do Pix's exhausting workout routine!", null);
 					
 				} else {
@@ -75,64 +115,50 @@ public class PixsPlayground {
 							"Pix is hovering close by, bouncing up and down on the spot while glancing your way. She obviously wants you to ask her for a personal training session. Call her over and grant her wish.", GYM_PIX_TRAINING){
 						@Override
 						public void effects(){
-							Main.game.getPlayer().incrementHealth(-Main.game.getPlayer().getAttributeValue(Attribute.HEALTH_MAXIMUM) * 0.1f);
-							Main.game.getTextEndStringBuilder().append(
-									"<p style='text-align:center'>[style.boldGood(+4)] <b style='color:"+Colour.MUSCLE_THREE.toWebHexString()+";'>Muscle Definition</b></p>"
-									+Main.game.getPlayer().incrementMuscle(4));
+							handlePerkProgressReset();
 						}
 					};
 				}
 				
 		} else if (index == 0) {
-			return new Response("Leave", "Decide to leave the gym.", GYM_EXTERIOR);
-			
-		} else
-			return null;
+			return new Response("Leave", "Decide to leave the gym.", GYM_EXTERIOR) {
+				@Override
+				public void effects(){
+					handlePerkProgressReset();
+				}
+			};
+		}
+		
+		return null;
 	}
 	
-	public static final DialogueNode GYM_EXTERIOR = new DialogueNode("Pix's Playground (Exterior)", "-", false) {
-
+	public static final DialogueNode GYM_EXTERIOR = new DialogueNode("Pix's Playground (Exterior)", "", false) {
 		@Override
 		public String getContent() {
-			if (!Main.game.getDialogueFlags().values.contains(DialogueFlagValue.gymIntroduced)) {
-				return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_EXTERIOR");
-				
-			} else {
-				return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_EXTERIOR_REPEAT");
-			}
+			return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_EXTERIOR");
 		}
-
+		@Override
+		public String getResponseTabTitle(int index) {
+			return ShoppingArcadeDialogue.getCoreResponseTab(index);
+		}
 		@Override
 		public Response getResponse(int responseTab, int index) {
-			if (index == 1) {
-				if(Main.game.getDialogueFlags().values.contains(DialogueFlagValue.gymHadTour)) {
-					return new Response("Enter", "Step inside the gym.", GYM_RETURNING);
-				} else {
-					return new Response("Enter", "Step inside the gym.", GYM);
-				}
-				
-				
-			} else if (index == 6) {
-				return new ResponseEffectsOnly("Arcade Entrance", "Fast travel to the entrance to the arcade."){
-					@Override
-					public void effects() {
-						Main.game.setActiveWorld(Main.game.getWorlds().get(WorldType.SHOPPING_ARCADE), PlaceType.SHOPPING_ARCADE_ENTRANCE, true);
+			if(responseTab==0) {
+				if (index == 1) {
+					if(!Main.game.isExtendedWorkTime()) {
+						return new Response("Enter", "The gym is currently closed. You'll have to return during opening hours if you want to work out here.", null);
+					} else if(Main.game.getDialogueFlags().values.contains(DialogueFlagValue.gymHadTour)) {
+						return new Response("Enter", "Step inside the gym.", GYM_RETURNING);
+					} else {
+						return new Response("Enter", "Step inside the gym.", GYM);
 					}
-				};
-
-			} else {
-				return null;
+				}
 			}
-		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
+			return ShoppingArcadeDialogue.getFastTravelResponses(responseTab, index);
 		}
 	};
 
-	public static final DialogueNode GYM = new DialogueNode("Pix's Playground", "-", true) {
-
+	public static final DialogueNode GYM = new DialogueNode("Pix's Playground", "", true) {
 		@Override
 		public String getContent() {
 			if (!Main.game.getDialogueFlags().values.contains(DialogueFlagValue.gymIntroduced)) {
@@ -142,7 +168,6 @@ public class PixsPlayground {
 				return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_ENTRY_REPEAT");
 			}
 		}
-
 		@Override
 		public Response getResponse(int responseTab, int index) {
 			if (index == 1) {
@@ -167,20 +192,13 @@ public class PixsPlayground {
 				return null;
 			}
 		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
-		}
 	};
 	
-	public static final DialogueNode GYM_FOLLOW = new DialogueNode("Pix's Playground", "-", true) {
-		
+	public static final DialogueNode GYM_FOLLOW = new DialogueNode("Pix's Playground", "", true) {
 		@Override
 		public String getContent() {
 			return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_FOLLOW");
 		}
-		
 		@Override
 		public Response getResponse(int responseTab, int index) {
 			if (!Main.game.getDialogueFlags().values.contains(DialogueFlagValue.gymIsMember)) {
@@ -212,31 +230,22 @@ public class PixsPlayground {
 					
 				} else if (index == 0) {
 					return new Response("Leave", "Tell Pix that you'll think about it and be back later.", GYM_EXTERIOR);
-	
-				} else {
-					return null;
 				}
+				return null;
 				
 			} else {
 				if (index == 1) {
-					return new Response("Enter", "Enter the gym and get changed.", GYM_MEMBER_ENTER);
+					return new Response("Continue", "Enter the changing rooms and get ready for a workout.", GYM_MEMBER_ENTER);
 					
 				} else if (index == 0) {
 					return new Response("Leave", "Tell Pix that you've changed your mind, and that you'll be back another time.", GYM_EXTERIOR);
-					
-				} else {
-					return null;
 				}
+				return null;
 			}
 		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
-		}
 	};
-	public static final DialogueNode GYM_RETURNING = new DialogueNode("Pix's Playground", "-", true) {
-
+	
+	public static final DialogueNode GYM_RETURNING = new DialogueNode("Pix's Playground", "", true) {
 		@Override
 		public String getContent() {
 			UtilText.nodeContentSB.setLength(0);
@@ -250,52 +259,35 @@ public class PixsPlayground {
 			
 			return UtilText.nodeContentSB.toString();
 		}
-		
 		@Override
 		public Response getResponse(int responseTab, int index) {
 			return GYM_FOLLOW.getResponse(responseTab, index);
 		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
-		}
 	};
-	public static final DialogueNode GYM_SINGLE_PAYMENT = new DialogueNode("Pix's Playground", "-", true) {
-
+	
+	public static final DialogueNode GYM_SINGLE_PAYMENT = new DialogueNode("Pix's Playground", "", true) {
 		@Override
 		public String getContent() {
 			return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_SINGLE_PAYMENT");
 		}
-		
 		@Override
 		public Response getResponse(int responseTab, int index) {
 			return getResponseGym(index);
 		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
-		}
 	};
-	public static final DialogueNode GYM_LIFETIME_PAYMENT = new DialogueNode("Pix's Playground", "-", true) {
-
+	
+	public static final DialogueNode GYM_LIFETIME_PAYMENT = new DialogueNode("Pix's Playground", "", true) {
 		@Override
 		public String getContent() {
 			return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_LIFETIME_PAYMENT");
 		}
-
 		@Override
 		public Response getResponse(int responseTab, int index) {
 			return getResponseGym(index);
 		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
-		}
 	};
-	public static final DialogueNode GYM_MEMBER_ENTER = new DialogueNode("Pix's Playground", "-", true) {
+	
+	public static final DialogueNode GYM_MEMBER_ENTER = new DialogueNode("Pix's Playground", "", true) {
 
 		@Override
 		public String getContent() {
@@ -306,70 +298,57 @@ public class PixsPlayground {
 		public Response getResponse(int responseTab, int index) {
 			return getResponseGym(index);
 		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
-		}
 	};
-	public static final DialogueNode GYM_CARDIO = new DialogueNode("Pix's Playground", "-", true) {
-		
+	
+	public static final DialogueNode GYM_CARDIO = new DialogueNode("Pix's Playground", "", true) {
+		@Override
+		public void applyPreParsingEffects() {
+			Main.game.getPlayer().addStatusEffect(StatusEffect.GYM_FATIGUE, STATUS_EFFECT_SECONDS + (60*60*1)); // + 1 to account for the time that this dialogue takes
+			incrementPerkProgress(10);
+			Main.game.getTextEndStringBuilder().append(
+					"<p style='text-align:center'>[style.boldBad(-5)] <b style='color:"+PresetColour.BODY_SIZE_THREE.toWebHexString()+";'>Body Size</b></p>"
+					+Main.game.getPlayer().incrementBodySize(-5));
+		}
 		@Override
 		public int getSecondsPassed() {
 			return 60*60;
 		}
-
 		@Override
 		public String getContent() {
 			UtilText.nodeContentSB.setLength(0);
 			
 			UtilText.nodeContentSB.append(UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_CARDIO"));
-			
-			if(Main.game.getPlayer().getHealthPercentage() < 0.4f) {
-				UtilText.nodeContentSB.append(UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_EXHAUSTED"));
-			} else {
-				if(Main.game.getDialogueFlags().values.contains(DialogueFlagValue.gymIsMember)) {
-					UtilText.nodeContentSB.append(UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_POST_WORKOUT_MEMBER"));
-				} else {
-					UtilText.nodeContentSB.append(UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_POST_WORKOUT"));
-				}
-			}
+
+			UtilText.nodeContentSB.append(getPerkProgressString(10));
 			
 			return UtilText.nodeContentSB.toString();
 		}
-
 		@Override
 		public Response getResponse(int responseTab, int index) {
 			return getResponseGym(index);
 		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
-		}
 	};
-	public static final DialogueNode GYM_WEIGHTS = new DialogueNode("Pix's Playground", "-", true) {
-		
+	
+	public static final DialogueNode GYM_WEIGHTS = new DialogueNode("Pix's Playground", "", true) {
+		@Override
+		public void applyPreParsingEffects() {
+			Main.game.getPlayer().addStatusEffect(StatusEffect.GYM_FATIGUE, STATUS_EFFECT_SECONDS + (60*60*1)); // + 1 to account for the time that this dialogue takes
+			incrementPerkProgress(10);
+			Main.game.getTextEndStringBuilder().append(
+					"<p style='text-align:center'>[style.boldGood(+5)] <b style='color:"+PresetColour.MUSCLE_THREE.toWebHexString()+";'>Muscle Definition</b></p>"
+					+Main.game.getPlayer().incrementMuscle(5));
+		}
 		@Override
 		public int getSecondsPassed() {
 			return 60*60;
 		}
-
 		@Override
 		public String getContent() {
 			UtilText.nodeContentSB.setLength(0);
 			
 			UtilText.nodeContentSB.append(UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_WEIGHTS"));
-			
-			if(Main.game.getPlayer().getHealthPercentage() < 0.4f) {
-				UtilText.nodeContentSB.append(UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_EXHAUSTED"));
-			} else {
-				if(Main.game.getDialogueFlags().values.contains(DialogueFlagValue.gymIsMember)) {
-					UtilText.nodeContentSB.append(UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_POST_WORKOUT_MEMBER"));
-				} else {
-					UtilText.nodeContentSB.append(UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_POST_WORKOUT"));
-				}
-			}
+
+			UtilText.nodeContentSB.append(getPerkProgressString(10));
 			
 			return UtilText.nodeContentSB.toString();
 		}
@@ -378,31 +357,28 @@ public class PixsPlayground {
 		public Response getResponse(int responseTab, int index) {
 			return getResponseGym(index);
 		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
-		}
 	};
-	public static final DialogueNode GYM_PIX_TRAINING = new DialogueNode("Pix's Playground", "-", true) {
-		
+	public static final DialogueNode GYM_PIX_TRAINING = new DialogueNode("Pix's Playground", "", true) {
+		@Override
+		public void applyPreParsingEffects() {
+			savedCardioEnergy = true;
+			savedWeightsEnergy = true;
+		}
 		@Override
 		public int getSecondsPassed() {
 			return 20*60;
 		}
-
 		@Override
 		public String getContent() {
 			return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_PIX_TRAINING");
 		}
-		
 		@Override
 		public Response getResponse(int responseTab, int index) {
 			if (index == 1) {
 				return new Response("Full effort", "Put all of your effort into the weights routine.", GYM_PIX_TRAINING_CARDIO){
 					@Override
 					public void effects(){
-						Main.game.getPlayer().incrementHealth(-Main.game.getPlayer().getAttributeValue(Attribute.HEALTH_MAXIMUM) * 0.4f);
+						savedWeightsEnergy = false;
 						Main.game.getTextStartStringBuilder().append(
 								"<p>"
 									+ "Deciding that it'd be best to give Pix one hundred percent of your effort, you fully commit to the exercise."
@@ -411,11 +387,8 @@ public class PixsPlayground {
 								+ "<p>"
 									+ "The routine isn't over just yet, however, and, once you're done with the weights, Pix leads you over towards the cardio section."
 								+ "</p>"
-								+ "<p style='text-align:center'>[style.boldGood(+6)] <b style='color:"+Colour.MUSCLE_THREE.toWebHexString()+";'>Muscle Definition</b></p>"
-								+Main.game.getPlayer().incrementMuscle(6));
-						Main.game.getTextEndStringBuilder().append(
-								"<p style='text-align:center'>[style.boldBad(-4)] <b style='color:"+Colour.BODY_SIZE_THREE.toWebHexString()+";'>Body Size</b></p>"
-								+Main.game.getPlayer().incrementBodySize(-4));
+								+ "<p style='text-align:center'>[style.boldGood(+8)] <b style='color:"+PresetColour.MUSCLE_THREE.toWebHexString()+";'>Muscle Definition</b></p>"
+								+Main.game.getPlayer().incrementMuscle(8));
 					}
 				};
 				
@@ -423,7 +396,6 @@ public class PixsPlayground {
 				return new Response("Hold back", "Hold back and conserve your energy...", GYM_PIX_TRAINING_CARDIO){
 					@Override
 					public void effects(){
-						Main.game.getPlayer().incrementHealth(-Main.game.getPlayer().getAttributeValue(Attribute.HEALTH_MAXIMUM) * 0.15f);
 						Main.game.getTextStartStringBuilder().append(
 								"<p>"
 									+ "Not wanting to exhaust yourself, you decide to hold back a little."
@@ -433,11 +405,8 @@ public class PixsPlayground {
 								+ "<p>"
 									+ "Pix doesn't seem to pick up on the fact that you're holding back, and, once you're done with the weights, she leads you over towards the cardio section."
 								+ "</p>"
-								+ "<p style='text-align:center'>[style.boldGood(+2)] <b style='color:"+Colour.MUSCLE_THREE.toWebHexString()+";'>Muscle Definition</b></p>"
-								+Main.game.getPlayer().incrementMuscle(2));
-						Main.game.getTextEndStringBuilder().append(
-								"<p style='text-align:center'>[style.boldBad(-4)] <b style='color:"+Colour.BODY_SIZE_THREE.toWebHexString()+";'>Body Size</b></p>"
-								+Main.game.getPlayer().incrementBodySize(-4));
+								+ "<p style='text-align:center'>[style.boldGood(+4)] <b style='color:"+PresetColour.MUSCLE_THREE.toWebHexString()+";'>Muscle Definition</b></p>"
+								+Main.game.getPlayer().incrementMuscle(4));
 					}
 				};
 				
@@ -445,40 +414,32 @@ public class PixsPlayground {
 				return null;
 			}
 		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
-		}
 	};
 	
-	public static final DialogueNode GYM_PIX_TRAINING_CARDIO = new DialogueNode("Pix's Playground", "-", true, true) {
-		
+	public static final DialogueNode GYM_PIX_TRAINING_CARDIO = new DialogueNode("Pix's Playground", "", true, true) {
 		@Override
 		public int getSecondsPassed() {
 			return 30*60;
 		}
-
 		@Override
 		public String getContent() {
 			return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_PIX_TRAINING_CARDIO");
 		}
-		
 		@Override
 		public Response getResponse(int responseTab, int index) {
 			if (index == 1) {
 				return new Response("Steady run", "Set the running machine's speed to a steady pace.", GYM_PIX_TRAINING_FINISH){
 					@Override
 					public void effects(){
-						Main.game.getPlayer().incrementHealth(-Main.game.getPlayer().getAttributeValue(Attribute.HEALTH_MAXIMUM) * 0.4f);
+						savedCardioEnergy = false;
 						Main.game.getTextStartStringBuilder().append(
 								"<p>"
 									+ "Wanting to show Pix what you can do, you decide to set the machine for a steady run."
 									+ " Pix lets out an impressed hum as she sees what speed you're setting the machine to,"
 									+ " [pix.speech(Mmm... You're eager to show off for me, aren't ya?)]"
 								+ "</p>"
-								+ "<p style='text-align:center'>[style.boldBad(-6)] <b style='color:"+Colour.BODY_SIZE_THREE.toWebHexString()+";'>Body Size</b></p>"
-								+Main.game.getPlayer().incrementBodySize(-6));
+								+ "<p style='text-align:center'>[style.boldBad(-8)] <b style='color:"+PresetColour.BODY_SIZE_THREE.toWebHexString()+";'>Body Size</b></p>"
+								+Main.game.getPlayer().incrementBodySize(-8));
 					}
 				};
 				
@@ -486,70 +447,90 @@ public class PixsPlayground {
 				return new Response("Slow jog", "Set the running machine's speed to a slow jog in order to conserve energy.", GYM_PIX_TRAINING_FINISH){
 					@Override
 					public void effects(){
-						Main.game.getPlayer().incrementHealth(-Main.game.getPlayer().getAttributeValue(Attribute.HEALTH_MAXIMUM) * 0.15f);
 						Main.game.getTextStartStringBuilder().append(
 								"<p>"
 									+ "Unwilling to completely exhaust yourself on the running machine, you decide to settle for a slow jog."
 									+ " Pix lets out a mildly annoyed huff as she sees what speed you're setting the machine to,"
 									+ " [pix.speech(Huh... You're more exhausted than I thought! You're gonna need to get fitter, aren't ya?)]"
 								+ "</p>"
-								+ "<p style='text-align:center'>[style.boldBad(-2)] <b style='color:"+Colour.BODY_SIZE_THREE.toWebHexString()+";'>Body Size</b></p>"
-								+Main.game.getPlayer().incrementBodySize(-2));
+								+ "<p style='text-align:center'>[style.boldBad(-4)] <b style='color:"+PresetColour.BODY_SIZE_THREE.toWebHexString()+";'>Body Size</b></p>"
+								+Main.game.getPlayer().incrementBodySize(-4));
 					}
 				};
-				
-			} else {
-				return null;
 			}
-		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
+			return null;
 		}
 	};
 	
-	public static final DialogueNode GYM_PIX_TRAINING_FINISH = new DialogueNode("Pix's Playground", "-", true, true) {
-		
+	public static final DialogueNode GYM_PIX_TRAINING_FINISH = new DialogueNode("Pix's Playground", "", true, true) {
+		@Override
+		public void applyPreParsingEffects() {
+			Main.game.getPlayer().addStatusEffect(StatusEffect.GYM_FATIGUE, STATUS_EFFECT_SECONDS + (60*30)); // + 0.5 to account for the time that this dialogue takes
+			incrementPerkProgress(10+(savedCardioEnergy?0:5)+(savedWeightsEnergy?0:5));
+		}
 		@Override
 		public int getSecondsPassed() {
 			return 30*60;
 		}
-
 		@Override
 		public String getContent() {
-			return UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_PIX_TRAINING_FINISH");
+			StringBuilder sb = new StringBuilder();
+			
+			sb.append(UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_PIX_TRAINING_FINISH"));
+			
+			sb.append(getPerkProgressString(10+(savedCardioEnergy?0:5)+(savedWeightsEnergy?0:5)));
+			
+			return sb.toString();
 		}
-		
 		@Override
 		public Response getResponse(int responseTab, int index) {
 			if (index == 1) {
+				if(!Main.game.getPlayer().isAbleToOrgasm()) {
+					return new Response("Pix's reward", "As you are unable to orgasm, you cannot take Pix up on her offer of a 'one-to-one cooldown exercise'...", null);
+				}
 				if(Main.getProperties().hasValue(PropertyValue.nonConContent)) {
 					return new Response("Pix's reward",
-							"You have a good idea of what Pix means when she says she wants to give you a 'one-to-one cooldown exercise'...", // OR DO YOU?! :D
-							GYM_PIX_ASSAULT);
+							"You have a good idea of what Pix means when she says she wants to give you a 'one-to-one cooldown exercise'..."
+									+ "<br/>[style.italicsGood(Cleans <b>a maximum of "+Units.fluid(500)+"</b> of fluids from all orifices.)]"
+									+ "<br/>[style.italicsGood(This will clean <b>only</b> your currently equipped clothing.)]",
+							GYM_PIX_ASSAULT) {
+						@Override
+						public void effects() {
+							handlePerkProgressReset();
+							Main.game.getNpc(Pix.class).applyWash(true, true, StatusEffect.CLEANED_SHOWER, 240+30);
+							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().applyWash(true, false, StatusEffect.CLEANED_SHOWER, 240+30));
+						}
+					};
+					
 				} else {
 					return new Response("Pix's reward",
-							"You have a good idea of what Pix means when she says she wants to give you a 'one-to-one cooldown exercise'...",
-							GYM_PIX_ASSAULT_CONSENSUAL);
+							"You have a good idea of what Pix means when she says she wants to give you a 'one-to-one cooldown exercise'..."
+									+ "<br/>[style.italicsGood(Cleans <b>a maximum of "+Units.fluid(500)+"</b> of fluids from all orifices.)]"
+									+ "<br/>[style.italicsGood(This will clean <b>only</b> your currently equipped clothing.)]",
+							GYM_PIX_ASSAULT_CONSENSUAL) {
+						@Override
+						public void effects() {
+							handlePerkProgressReset();
+							Main.game.getNpc(Pix.class).applyWash(true, true, StatusEffect.CLEANED_SHOWER, 240+30);
+							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().applyWash(true, false, StatusEffect.CLEANED_SHOWER, 240+30));
+						}
+					};
 				}
 				
-			} else 
-				if (index == 2) {
-				return new Response("Leave", "You're far too tired to deal with Pix right now. Get changed and leave the gym, avoiding Pix in the showers as you do so.", GYM_EXTERIOR);
-				
-			} else {
-				return null;
+			} else if (index == 2) {
+				return new Response("Leave", "You're far too tired to deal with Pix right now. Get changed and leave the gym, avoiding Pix in the showers as you do so.", GYM_EXTERIOR){
+					@Override
+					public void effects() {
+						handlePerkProgressReset();
+					}
+				};
 			}
-		}
-
-		@Override
-		public boolean isRegenerationDisabled() {
-			return true;
+			
+			return null;
 		}
 	};
 	
-	public static final DialogueNode GYM_PIX_ASSAULT = new DialogueNode("Pix's Playground", "-", true) {
+	public static final DialogueNode GYM_PIX_ASSAULT = new DialogueNode("Pix's Playground", "", true) {
 
 		@Override
 		public String getContent() {
@@ -557,7 +538,7 @@ public class PixsPlayground {
 			
 			UtilText.nodeContentSB.append(UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_PIX_ASSAULT"));
 			
-			if(Main.game.getPlayer().getHealthPercentage() < 0.4f) {
+			if(isExhausted()) {
 				UtilText.nodeContentSB.append(UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_PIX_ASSAULT_EXHAUSTED"));
 			} else {
 				if(Main.game.getPlayer().getAttributeValue(Attribute.MAJOR_PHYSIQUE)<Main.game.getNpc(Pix.class).getAttributeValue(Attribute.MAJOR_PHYSIQUE)) {
@@ -577,8 +558,8 @@ public class PixsPlayground {
 						"Tell Pix that you're far too tired to do any more physical exercise right now.",
 						false, false,
 						new SMPixShowerTime(
-								Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Pix.class), SexSlotBipeds.FACE_TO_WALL_FACING_TARGET_SHOWER_PIX)),
-								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.FACE_TO_WALL_AGAINST_WALL_SHOWER_PIX))),
+								Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Pix.class), SexSlotUnique.FACE_TO_WALL_FACING_TARGET_SHOWER_PIX)),
+								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotUnique.FACE_TO_WALL_AGAINST_WALL_SHOWER_PIX))),
 						null,
 						null, PIX_POST_SEX, UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_PIX_ASSAULT_TOO_TIRED"));
 				
@@ -587,8 +568,8 @@ public class PixsPlayground {
 						"Tell Pix that you can make it up to her right now...",
 						false, false,
 						new SMPixShowerTime(
-								Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Pix.class), SexSlotBipeds.FACE_TO_WALL_FACING_TARGET_SHOWER_PIX)),
-								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.FACE_TO_WALL_AGAINST_WALL_SHOWER_PIX))),
+								Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Pix.class), SexSlotUnique.FACE_TO_WALL_FACING_TARGET_SHOWER_PIX)),
+								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotUnique.FACE_TO_WALL_AGAINST_WALL_SHOWER_PIX))),
 						null,
 						null, PIX_POST_SEX, UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_PIX_ASSAULT_OFFER_SEX"));
 				
@@ -597,15 +578,15 @@ public class PixsPlayground {
 						"Apologise to Pix and accept her punishment.",
 						false, false,
 						new SMPixShowerTime(
-								Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Pix.class), SexSlotBipeds.FACE_TO_WALL_FACING_TARGET_SHOWER_PIX)),
-								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.FACE_TO_WALL_AGAINST_WALL_SHOWER_PIX))),
+								Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Pix.class), SexSlotUnique.FACE_TO_WALL_FACING_TARGET_SHOWER_PIX)),
+								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotUnique.FACE_TO_WALL_AGAINST_WALL_SHOWER_PIX))),
 						null,
 						null, PIX_POST_SEX, UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_PIX_ASSAULT_ACCEPT_PUNISHMENT"));
 				
 			} else if(index==4) {
-				if(Main.game.getPlayer().getHealthPercentage()<0.4f) {
+				if(!savedCardioEnergy && !savedWeightsEnergy) {
 					return new Response("Break free",
-							"You simply don't have enough energy left to try and break free! You need at least 40% energy for this ("+(Main.game.getPlayer().getAttributeValue(Attribute.HEALTH_MAXIMUM)*0.4)+")",
+							"As you spent all of your energy pushing yourself through Pix's cardio and weights exercises, you simply don't have enough energy left to try and break free!",
 							null);
 					
 				} else {
@@ -621,26 +602,26 @@ public class PixsPlayground {
 									+Main.game.getPlayer().getAttributeValue(Attribute.MAJOR_PHYSIQUE)+"), so you don't stand a chance of turning the tables on her in this situation.",
 							null);
 					
-				} else if(Main.game.getPlayer().getHealthPercentage()<0.4f) {
+				} else if(!savedCardioEnergy && !savedWeightsEnergy) {
 					return new Response("Turn Tables",
-							"You simply don't have enough energy left to try and turn the tables on Pix! You need at least 40% energy for this ("+(Main.game.getPlayer().getAttributeValue(Attribute.HEALTH_MAXIMUM)*0.4)+")",
+							"As you spent all of your energy pushing yourself through Pix's cardio and weights exercises, you simply don't have enough energy left to try and turn the tables on Pix!)",
 							null);
 					
 				} else {
 					return new ResponseSex("Turn Tables",
 							"Use the energy that you've saved by holding back during your exercise to break free from Pix, and then turn the tables on her...",
 							false, false,
-							new SMFaceToWall(
-									Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.FACE_TO_WALL_FACING_TARGET)),
-									Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Pix.class), SexSlotBipeds.FACE_TO_WALL_AGAINST_WALL))) {
+							new SMAgainstWall(
+									Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotAgainstWall.STANDING_WALL)),
+									Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Pix.class), SexSlotAgainstWall.FACE_TO_WALL))) {
 								@Override
-								public boolean isPlayerStartNaked() {
+								public boolean isCharacterStartNaked(GameCharacter character) {
 									return true;
 								}
-		
 								@Override
-								public boolean isPartnerStartNaked() {
-									return true;
+								public List<AbstractSexPosition> getAllowedSexPositions() {
+									return Util.newArrayListOfValues(
+											SexPosition.AGAINST_WALL);
 								}
 							},
 							null,
@@ -714,7 +695,7 @@ public class PixsPlayground {
 		}
 	};
 	
-	public static final DialogueNode GYM_PIX_ASSAULT_CONSENSUAL = new DialogueNode("Pix's Playground", "-", true) {
+	public static final DialogueNode GYM_PIX_ASSAULT_CONSENSUAL = new DialogueNode("Pix's Playground", "", true) {
 
 		@Override
 		public String getContent() {
@@ -732,8 +713,8 @@ public class PixsPlayground {
 						"Let Pix have her fun with you.",
 						true, false,
 						new SMPixShowerTime(
-								Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Pix.class), SexSlotBipeds.FACE_TO_WALL_FACING_TARGET_SHOWER_PIX)),
-								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.FACE_TO_WALL_AGAINST_WALL_SHOWER_PIX))),
+								Util.newHashMapOfValues(new Value<>(Main.game.getNpc(Pix.class), SexSlotUnique.FACE_TO_WALL_FACING_TARGET_SHOWER_PIX)),
+								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotUnique.FACE_TO_WALL_AGAINST_WALL_SHOWER_PIX))),
 						null,
 						null, PIX_POST_SEX_CONSENSUAL, UtilText.parseFromXMLFile("places/dominion/shoppingArcade/pixsPlayground", "GYM_PIX_ASSAULT_CONSENSUAL_START"));
 				

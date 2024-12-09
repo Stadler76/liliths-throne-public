@@ -1,5 +1,6 @@
 package com.lilithsthrone.controller.eventListeners;
 
+import com.lilithsthrone.game.dialogue.utils.EnchantmentDialogue;
 import org.w3c.dom.events.Event;
 import org.w3c.dom.events.EventListener;
 
@@ -17,14 +18,22 @@ import com.lilithsthrone.main.Main;
 
 /**
  * @since 0.1.0
- * @version 0.2.11
+ * @version 0.3.4.5
  * @author Innoxia
  */
 public class InventorySelectedItemEventListener implements EventListener {
 	private AbstractItem item;
-	private AbstractClothing clothing, clothingEquipped;
-	private AbstractWeapon weapon, weaponEquipped;
+	
+	private AbstractClothing clothing;
+	private AbstractClothing clothingEquipped;
+	
+	private AbstractWeapon weapon;
+	private AbstractWeapon weaponEquipped;
+	
+	private InventorySlot weaponSlot;
+	
 	private GameCharacter owner;
+	
 	private int buyBackIndex;
 
 	@Override
@@ -33,10 +42,11 @@ public class InventorySelectedItemEventListener implements EventListener {
 //		if (Main.game.getCurrentDialogueNode().getDialogueNodeType() == DialogueNodeType.CHARACTERS_PRESENT
 //				|| Main.game.getCurrentDialogueNode().getDialogueNodeType() == DialogueNodeType.PHONE
 //				|| Main.game.getCurrentDialogueNode().getDialogueNodeType() == DialogueNodeType.OCCUPANT_MANAGEMENT) {
-		if(Main.game.getCurrentDialogueNode().getDialogueNodeType()!=DialogueNodeType.INVENTORY
+		if(Main.game.getCurrentDialogueNode()==EnchantmentDialogue.ENCHANTMENT_MENU
+			|| (Main.game.getCurrentDialogueNode().getDialogueNodeType()!=DialogueNodeType.INVENTORY
 				&& (!Main.game.isInSex() || Main.game.getCurrentDialogueNode().isInventoryDisabled())
 				&& !Main.game.isInCombat()
-				&& (clothingEquipped!=null || weaponEquipped!=null)) {
+				&& (clothingEquipped!=null || weaponEquipped!=null))) {
 			return;
 		}
 		
@@ -84,7 +94,7 @@ public class InventorySelectedItemEventListener implements EventListener {
 				Main.mainController.openInventory();
 			}
 			InventoryDialogue.setOwner(owner);
-			InventoryDialogue.setWeapon(weapon);
+			InventoryDialogue.setWeapon(weaponSlot, weapon);
 			InventoryDialogue.setBuyBackIndex(buyBackIndex);
 			Main.game.setResponseTab(1);
 			Main.game.setContent(new Response("", "", InventoryDialogue.WEAPON_INVENTORY));
@@ -104,7 +114,7 @@ public class InventorySelectedItemEventListener implements EventListener {
 				Main.mainController.openInventory();
 			}
 			InventoryDialogue.setOwner(owner);
-			InventoryDialogue.setWeapon(weaponEquipped);
+			InventoryDialogue.setWeapon(weaponSlot, weaponEquipped);
 			InventoryDialogue.setBuyBackIndex(buyBackIndex);
 			Main.game.setResponseTab(1);
 			Main.game.setContent(new Response("", "", InventoryDialogue.WEAPON_EQUIPPED));
@@ -148,14 +158,22 @@ public class InventorySelectedItemEventListener implements EventListener {
 	
 	public InventorySelectedItemEventListener setWeaponEquipped(GameCharacter owner, InventorySlot invSlot) {
 		resetVariables();
-		
 		setOwner(owner);
+		weaponSlot = invSlot;
 		
 		if (owner != null) {
-			if (invSlot == InventorySlot.WEAPON_MAIN) {
-				weaponEquipped = owner.getMainWeapon();
-			} else {
-				weaponEquipped = owner.getOffhandWeapon();
+			if (invSlot == InventorySlot.WEAPON_MAIN_1) {
+				weaponEquipped = owner.getMainWeapon(0);
+			} else if (invSlot == InventorySlot.WEAPON_MAIN_2) {
+				weaponEquipped = owner.getMainWeapon(1);
+			} else if (invSlot == InventorySlot.WEAPON_MAIN_3) {
+				weaponEquipped = owner.getMainWeapon(2);
+			} else if (invSlot == InventorySlot.WEAPON_OFFHAND_1) {
+				weaponEquipped = owner.getOffhandWeapon(0);
+			} else if (invSlot == InventorySlot.WEAPON_OFFHAND_2) {
+				weaponEquipped = owner.getOffhandWeapon(1);
+			} else if (invSlot == InventorySlot.WEAPON_OFFHAND_3) {
+				weaponEquipped = owner.getOffhandWeapon(2);
 			}
 		} else {
 			weaponEquipped = null;
@@ -188,6 +206,7 @@ public class InventorySelectedItemEventListener implements EventListener {
 		clothingEquipped = null;
 		weapon = null;
 		weaponEquipped = null;
+		weaponSlot = null;
 		owner = null;
 		buyBackIndex = 0;
 	}

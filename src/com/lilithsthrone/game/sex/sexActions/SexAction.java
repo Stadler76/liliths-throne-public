@@ -15,16 +15,16 @@ import com.lilithsthrone.game.character.body.valueEnums.FluidFlavour;
 import com.lilithsthrone.game.character.fetishes.Fetish;
 import com.lilithsthrone.game.dialogue.utils.UtilText;
 import com.lilithsthrone.game.sex.ArousalIncrease;
-import com.lilithsthrone.game.sex.Sex;
 import com.lilithsthrone.game.sex.SexAreaInterface;
 import com.lilithsthrone.game.sex.SexAreaOrifice;
 import com.lilithsthrone.game.sex.SexAreaPenetration;
 import com.lilithsthrone.game.sex.SexPace;
 import com.lilithsthrone.game.sex.SexParticipantType;
+import com.lilithsthrone.main.Main;
 
 /**
  * @since 0.1.0
- * @version 0.2.8
+ * @version 0.3.7.3
  * @author Innoxia
  */
 public abstract class SexAction implements SexActionInterface {
@@ -62,7 +62,6 @@ public abstract class SexAction implements SexActionInterface {
 			CorruptionLevel minimumCorruptionNeeded,
 			Map<SexAreaInterface, SexAreaInterface> sexAreaInteractions,
 			SexParticipantType participantType) {
-		
 		this(sexActionType,
 				selfArousalGain,
 				targetArousalGain,
@@ -117,10 +116,10 @@ public abstract class SexAction implements SexActionInterface {
 
 	@Override
 	public ArousalIncrease getArousalGainSelf() {
-		if(Sex.getSexPace(Sex.getCharacterPerformingAction())==SexPace.SUB_RESISTING
+		if(Main.sex.getSexPace(Main.sex.getCharacterPerformingAction())==SexPace.SUB_RESISTING
 				&& this.getActionType()!=SexActionType.PREPARE_FOR_PARTNER_ORGASM
 				&& this.getActionType()!=SexActionType.SPECIAL) {
-			if(Sex.getCharacterPerformingAction().hasFetish(Fetish.FETISH_NON_CON_SUB)) {
+			if(Main.sex.getCharacterPerformingAction().hasFetish(Fetish.FETISH_NON_CON_SUB)) {
 				return ArousalIncrease.FOUR_HIGH;
 				
 			} else {
@@ -140,18 +139,23 @@ public abstract class SexAction implements SexActionInterface {
 
 	@Override
 	public ArousalIncrease getArousalGainTarget() {
-		if(!Sex.isMasturbation()) {
-			if(Sex.getSexPace(Sex.getCharacterTargetedForSexAction(this))==SexPace.SUB_RESISTING
+		if(this.isSadisticAction() && !Main.sex.getCharacterTargetedForSexAction(this).getFetishDesire(Fetish.FETISH_MASOCHIST).isPositive()) {
+			return ArousalIncrease.ZERO_NONE;
+		}
+		
+		if(!Main.sex.isMasturbation()) {
+			if(Main.sex.getSexPace(Main.sex.getCharacterTargetedForSexAction(this))==SexPace.SUB_RESISTING
 					&& this.getActionType()!=SexActionType.PREPARE_FOR_PARTNER_ORGASM
 					&& this.getActionType()!=SexActionType.SPECIAL) {
-				if(Sex.getCharacterTargetedForSexAction(this).hasFetish(Fetish.FETISH_NON_CON_SUB)) {
+				if(Main.sex.getCharacterTargetedForSexAction(this).hasFetish(Fetish.FETISH_NON_CON_SUB)) {
 					return ArousalIncrease.FOUR_HIGH;
 					
 				} else {
 					// If it's an erogenous zone, they gain arousal. If not, arousal gain is 0.
 					for(SexAreaInterface sArea : this.getSexAreaInteractions().values()) {
-						if((sArea.isOrifice() && ((SexAreaOrifice)sArea).getBaseArousalWhenPenetrated()>1)
-								|| (sArea.isPenetration() && ((SexAreaPenetration)sArea).getBaseArousalWhenPenetrating()>1)) {
+						if(sArea!=null
+								&& ((sArea.isOrifice() && ((SexAreaOrifice)sArea).getBaseArousalWhenPenetrated()>1)
+										|| (sArea.isPenetration() && ((SexAreaPenetration)sArea).getBaseArousalWhenPenetrating()>1))) {
 							return ArousalIncrease.TWO_LOW;
 						}
 					}
@@ -175,7 +179,7 @@ public abstract class SexAction implements SexActionInterface {
 	public abstract String getDescription();
 
 	private static String formatFlavour(String input) {
-		return "<p style='margin:0; padding:0; text-align:center;'><i>"
+		return "<p style='text-align:center; margin:0; padding:0;'><i>"
 				+ input
 			+ "</i></p>";
 	}
@@ -283,7 +287,7 @@ public abstract class SexAction implements SexActionInterface {
 	
 	public List<Fetish> getFetishesForEitherPartner(GameCharacter characterPerformingAction, boolean characterPerformingActionFetishes) {
 //		if(characterFetishes==null || characterFetishes.get(characterPerformingAction)==null) {
-			GameCharacter characterTarget = Sex.getTargetedPartner(characterPerformingAction);
+			GameCharacter characterTarget = Main.sex.getTargetedPartner(characterPerformingAction);
 			
 			characterFetishes = new HashMap<>();
 			characterFetishesForPartner = new HashMap<>();
@@ -311,7 +315,7 @@ public abstract class SexAction implements SexActionInterface {
 				characterFetishesForPartner.get(characterPerformingAction).add(Fetish.FETISH_INCEST);
 			}
 			
-			if(Sex.isPublicSex()) {
+			if(Main.sex.isPublicSex()) {
 				characterFetishes.get(characterPerformingAction).add(Fetish.FETISH_EXHIBITIONIST);
 				characterFetishesForPartner.get(characterPerformingAction).add(Fetish.FETISH_EXHIBITIONIST);
 			}
@@ -330,6 +334,9 @@ public abstract class SexAction implements SexActionInterface {
 						characterFetishes.get(characterPerformingAction).add(Fetish.FETISH_DOMINANT);
 						characterFetishesForPartner.get(characterPerformingAction).add(Fetish.FETISH_SUBMISSIVE);
 						characterFetishes.get(characterPerformingAction).add(Fetish.FETISH_SADIST);
+						if(this.getParticipantType()==SexParticipantType.SELF) {
+							characterFetishes.get(characterPerformingAction).add(Fetish.FETISH_MASOCHIST);
+						}
 						characterFetishesForPartner.get(characterPerformingAction).add(Fetish.FETISH_MASOCHIST);
 						break;
 					case SUB_EAGER:
@@ -478,7 +485,6 @@ public abstract class SexAction implements SexActionInterface {
 				}
 			}
 			
-			
 			List<SexAreaInterface> cummedInList = this.getAreasCummedIn(characterPerformingAction, characterTarget);
 			if(cummedInList != null) {
 				characterFetishes.get(characterPerformingAction).add(Fetish.FETISH_CUM_STUD);
@@ -524,6 +530,7 @@ public abstract class SexAction implements SexActionInterface {
 								characterFetishesForPartner.get(characterPerformingAction).add(Fetish.FETISH_VAGINAL_RECEIVING);
 								characterFetishesForPartner.get(characterPerformingAction).add(Fetish.FETISH_PREGNANCY);
 								break;
+							case SPINNERET:
 							case URETHRA_PENIS:
 							case URETHRA_VAGINA:
 								break;
@@ -607,6 +614,7 @@ public abstract class SexAction implements SexActionInterface {
 								characterFetishesForPartner.get(characterPerformingAction).add(Fetish.FETISH_VAGINAL_GIVING);
 								characterFetishesForPartner.get(characterPerformingAction).add(Fetish.FETISH_IMPREGNATION);
 								break;
+							case SPINNERET:
 							case URETHRA_PENIS:
 							case URETHRA_VAGINA:
 								break;
@@ -653,7 +661,7 @@ public abstract class SexAction implements SexActionInterface {
 									getFetishesFromPenetrationAndOrificeTypes(characterPerformingAction, entry.getKey(), characterPerformingAction, entry.getValue(), !characterPerformingActionFetishes));
 						}
 						characterFetishes.get(characterPerformingAction).addAll(
-								getFetishesFromPenetrationAndOrificeTypes(characterPerformingAction, entry.getKey(), Sex.getTargetedPartner(characterPerformingAction), entry.getValue(), characterPerformingActionFetishes));
+								getFetishesFromPenetrationAndOrificeTypes(characterPerformingAction, entry.getKey(), Main.sex.getTargetedPartner(characterPerformingAction), entry.getValue(), characterPerformingActionFetishes));
 						
 					} else {
 						if(this.getParticipantType()==SexParticipantType.SELF) {
@@ -661,7 +669,7 @@ public abstract class SexAction implements SexActionInterface {
 									getFetishesFromPenetrationAndOrificeTypes(characterPerformingAction, entry.getKey(), characterPerformingAction, entry.getValue(), !characterPerformingActionFetishes));
 						}
 						characterFetishesForPartner.get(characterPerformingAction).addAll(
-								getFetishesFromPenetrationAndOrificeTypes(characterPerformingAction, entry.getKey(), Sex.getTargetedPartner(characterPerformingAction), entry.getValue(), characterPerformingActionFetishes));
+								getFetishesFromPenetrationAndOrificeTypes(characterPerformingAction, entry.getKey(), Main.sex.getTargetedPartner(characterPerformingAction), entry.getValue(), characterPerformingActionFetishes));
 					}
 				}
 			}

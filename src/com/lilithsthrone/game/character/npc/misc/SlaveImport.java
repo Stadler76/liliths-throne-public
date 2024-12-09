@@ -12,14 +12,13 @@ import com.lilithsthrone.game.character.gender.Gender;
 import com.lilithsthrone.game.character.npc.NPC;
 import com.lilithsthrone.game.character.npc.dominion.Finch;
 import com.lilithsthrone.game.character.persona.NameTriplet;
+import com.lilithsthrone.game.character.persona.Occupation;
 import com.lilithsthrone.game.character.race.RaceStage;
 import com.lilithsthrone.game.character.race.Subspecies;
 import com.lilithsthrone.game.dialogue.DialogueNode;
 import com.lilithsthrone.game.dialogue.utils.UtilText;
 import com.lilithsthrone.game.inventory.CharacterInventory;
 import com.lilithsthrone.game.inventory.InventorySlot;
-import com.lilithsthrone.game.inventory.clothing.AbstractClothingType;
-import com.lilithsthrone.game.inventory.clothing.ClothingType;
 import com.lilithsthrone.main.Main;
 import com.lilithsthrone.world.WorldType;
 import com.lilithsthrone.world.places.PlaceType;
@@ -36,10 +35,10 @@ public class SlaveImport extends NPC {
 	}
 	
 	public SlaveImport(boolean isImported) {
-		super(isImported, new NameTriplet("Slave"), null, "Generic slave.",
+		super(isImported, new NameTriplet("Slave"), "", "-",
 				18, Month.JUNE, 10,
 				1, Gender.F_V_B_FEMALE, Subspecies.HUMAN, RaceStage.HUMAN,
-				new CharacterInventory(0), WorldType.EMPTY, PlaceType.GENERIC_EMPTY_TILE, false);
+				new CharacterInventory(0), WorldType.EMPTY, PlaceType.GENERIC_HOLDING_CELL, false);
 	}
 	
 	@Override
@@ -73,15 +72,15 @@ public class SlaveImport extends NPC {
 
 			this.washAllOrifices(true);
 			this.calculateStatusEffects(0);
-			this.cleanAllDirtySlots();
-			this.cleanAllClothing(true);
+			this.cleanAllDirtySlots(true);
+			this.cleanAllClothing(true, false);
 			
-			this.clearNonEquippedInventory();
+			this.clearNonEquippedInventory(true);
 			if(this.getClothingInSlot(InventorySlot.NECK)!=null) {
 				this.getClothingInSlot(InventorySlot.NECK).setSealed(false);
 				this.unequipClothingIntoInventory(this.getClothingInSlot(InventorySlot.NECK), true, this);
 			}
-			this.equipClothingFromNowhere(AbstractClothingType.generateClothing(ClothingType.NECK_SLAVE_COLLAR), true, this);
+			this.equipClothingFromNowhere(Main.game.getItemGen().generateClothing("innoxia_bdsm_metal_collar", false), true, this);
 			this.getClothingInSlot(InventorySlot.NECK).setSealed(true);
 			
 			
@@ -91,6 +90,8 @@ public class SlaveImport extends NPC {
 			this.getSlavesOwned().clear();
 			
 			this.setPlayerKnowsName(true);
+			
+			this.setHistory(Occupation.NPC_SLAVE);
 //		}
 	}
 	

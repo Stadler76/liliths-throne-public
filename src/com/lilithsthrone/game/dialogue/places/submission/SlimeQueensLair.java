@@ -4,6 +4,7 @@ import com.lilithsthrone.game.character.GameCharacter;
 import com.lilithsthrone.game.character.attributes.Attribute;
 import com.lilithsthrone.game.character.body.valueEnums.BodyMaterial;
 import com.lilithsthrone.game.character.effects.Perk;
+import com.lilithsthrone.game.character.effects.StatusEffect;
 import com.lilithsthrone.game.character.fetishes.Fetish;
 import com.lilithsthrone.game.character.npc.submission.SlimeGuardFire;
 import com.lilithsthrone.game.character.npc.submission.SlimeGuardIce;
@@ -21,18 +22,19 @@ import com.lilithsthrone.game.dialogue.responses.ResponseSex;
 import com.lilithsthrone.game.dialogue.utils.UtilText;
 import com.lilithsthrone.game.inventory.InventorySlot;
 import com.lilithsthrone.game.inventory.clothing.AbstractClothing;
-import com.lilithsthrone.game.inventory.clothing.AbstractClothingType;
-import com.lilithsthrone.game.inventory.clothing.ClothingType;
-import com.lilithsthrone.game.sex.Sex;
-import com.lilithsthrone.game.sex.managers.universal.SMDoggy;
+import com.lilithsthrone.game.sex.managers.universal.SMAllFours;
+import com.lilithsthrone.game.sex.managers.universal.SMBath;
 import com.lilithsthrone.game.sex.managers.universal.SMGeneric;
-import com.lilithsthrone.game.sex.managers.universal.SMMissionary;
-import com.lilithsthrone.game.sex.positions.SexSlotBipeds;
+import com.lilithsthrone.game.sex.managers.universal.SMLyingDown;
+import com.lilithsthrone.game.sex.positions.SexPosition;
+import com.lilithsthrone.game.sex.positions.slots.SexSlotAllFours;
+import com.lilithsthrone.game.sex.positions.slots.SexSlotLyingDown;
 import com.lilithsthrone.main.Main;
-import com.lilithsthrone.utils.Colour;
 import com.lilithsthrone.utils.Util;
 import com.lilithsthrone.utils.Util.Value;
 import com.lilithsthrone.utils.Vector2i;
+import com.lilithsthrone.utils.colours.Colour;
+import com.lilithsthrone.utils.colours.PresetColour;
 import com.lilithsthrone.world.WorldType;
 import com.lilithsthrone.world.places.PlaceType;
 
@@ -153,11 +155,11 @@ public class SlimeQueensLair {
 							"Push [slimeFire.name] and [slimeIce.name] down onto all fours, side-by-side, and get ready to fuck them.",
 							null, null, null, null, null, null,
 							true, false,
-							new SMDoggy(
-									Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.DOGGY_BEHIND)),
+							new SMAllFours(
+									Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotAllFours.BEHIND)),
 									Util.newHashMapOfValues(
-											new Value<>(Main.game.getNpc(SlimeGuardIce.class), SexSlotBipeds.DOGGY_ON_ALL_FOURS),
-											new Value<>(Main.game.getNpc(SlimeGuardFire.class), SexSlotBipeds.DOGGY_ON_ALL_FOURS_SECOND))) {
+											new Value<>(Main.game.getNpc(SlimeGuardIce.class), SexSlotAllFours.ALL_FOURS),
+											new Value<>(Main.game.getNpc(SlimeGuardFire.class), SexSlotAllFours.ALL_FOURS_TWO))) {
 								@Override
 								public boolean isPositionChangingAllowed(GameCharacter character) {
 									return false;
@@ -171,11 +173,11 @@ public class SlimeQueensLair {
 							"Let [slimeFire.name] and [slimeIce.name] spitroast you.",
 							Util.newArrayListOfValues(Fetish.FETISH_SUBMISSIVE), null, Fetish.FETISH_SUBMISSIVE.getAssociatedCorruptionLevel(), null, null, null,
 							true, true,
-							new SMDoggy(
+							new SMAllFours(
 									Util.newHashMapOfValues(
-											new Value<>(Main.game.getNpc(SlimeGuardIce.class), SexSlotBipeds.DOGGY_INFRONT),
-											new Value<>(Main.game.getNpc(SlimeGuardFire.class), SexSlotBipeds.DOGGY_BEHIND)),
-									Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.DOGGY_ON_ALL_FOURS))) {
+											new Value<>(Main.game.getNpc(SlimeGuardIce.class), SexSlotAllFours.IN_FRONT),
+											new Value<>(Main.game.getNpc(SlimeGuardFire.class), SexSlotAllFours.BEHIND)),
+									Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotAllFours.ALL_FOURS))) {
 								@Override
 								public boolean isPositionChangingAllowed(GameCharacter character) {
 									return false;
@@ -193,11 +195,11 @@ public class SlimeQueensLair {
 							"Push [slimeFire.name] and [slimeIce.name] down onto all fours, side-by-side, and get ready to fuck them.",
 							null, null, null, null, null, null,
 							true, false,
-							new SMDoggy(
-									Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.DOGGY_BEHIND)),
+							new SMAllFours(
+									Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotAllFours.BEHIND)),
 									Util.newHashMapOfValues(
-											new Value<>(Main.game.getNpc(SlimeGuardIce.class), SexSlotBipeds.DOGGY_ON_ALL_FOURS),
-											new Value<>(Main.game.getNpc(SlimeGuardFire.class), SexSlotBipeds.DOGGY_ON_ALL_FOURS_SECOND))) {
+											new Value<>(Main.game.getNpc(SlimeGuardIce.class), SexSlotAllFours.ALL_FOURS),
+											new Value<>(Main.game.getNpc(SlimeGuardFire.class), SexSlotAllFours.ALL_FOURS_TWO))) {
 								@Override
 								public boolean isPositionChangingAllowed(GameCharacter character) {
 									return false;
@@ -211,11 +213,11 @@ public class SlimeQueensLair {
 							"Let [slimeFire.name] and [slimeIce.name] spitroast you.",
 							Util.newArrayListOfValues(Fetish.FETISH_SUBMISSIVE), null, Fetish.FETISH_SUBMISSIVE.getAssociatedCorruptionLevel(), null, null, null,
 							true, true,
-							new SMDoggy(
+							new SMAllFours(
 									Util.newHashMapOfValues(
-											new Value<>(Main.game.getNpc(SlimeGuardIce.class), SexSlotBipeds.DOGGY_INFRONT),
-											new Value<>(Main.game.getNpc(SlimeGuardFire.class), SexSlotBipeds.DOGGY_BEHIND)),
-									Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.DOGGY_ON_ALL_FOURS))) {
+											new Value<>(Main.game.getNpc(SlimeGuardIce.class), SexSlotAllFours.IN_FRONT),
+											new Value<>(Main.game.getNpc(SlimeGuardFire.class), SexSlotAllFours.BEHIND)),
+									Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotAllFours.ALL_FOURS))) {
 								@Override
 								public boolean isPositionChangingAllowed(GameCharacter character) {
 									return false;
@@ -400,11 +402,11 @@ public class SlimeQueensLair {
 						"[slimeFire.name] and [slimeIce.name] move to have some fun with you...",
 						Util.newArrayListOfValues(Fetish.FETISH_SUBMISSIVE), null, Fetish.FETISH_SUBMISSIVE.getAssociatedCorruptionLevel(), null, null, null,
 						false, false,
-						new SMDoggy(
+						new SMAllFours(
 								Util.newHashMapOfValues(
-										new Value<>(Main.game.getNpc(SlimeGuardIce.class), SexSlotBipeds.DOGGY_INFRONT),
-										new Value<>(Main.game.getNpc(SlimeGuardFire.class), SexSlotBipeds.DOGGY_BEHIND)),
-								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.DOGGY_ON_ALL_FOURS))) {
+										new Value<>(Main.game.getNpc(SlimeGuardIce.class), SexSlotAllFours.IN_FRONT),
+										new Value<>(Main.game.getNpc(SlimeGuardFire.class), SexSlotAllFours.BEHIND)),
+								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotAllFours.ALL_FOURS))) {
 							@Override
 							public boolean isPositionChangingAllowed(GameCharacter character) {
 								return false;
@@ -465,7 +467,7 @@ public class SlimeQueensLair {
 					@Override
 					public void effects() {
 						Main.game.getPlayer().setLocation(WorldType.SLIME_QUEENS_LAIR_FIRST_FLOOR, PlaceType.SLIME_QUEENS_LAIR_STAIRS_DOWN);
-						Main.game.setContent(new Response("", "", Main.game.getDefaultDialogueNoEncounter()));
+						Main.game.setContent(new Response("", "", Main.game.getDefaultDialogue(false)));
 					}
 				};
 
@@ -494,7 +496,7 @@ public class SlimeQueensLair {
 					@Override
 					public void effects() {
 						Main.game.getPlayer().setLocation(WorldType.SLIME_QUEENS_LAIR_GROUND_FLOOR, PlaceType.SLIME_QUEENS_LAIR_STAIRS_UP);
-						Main.game.setContent(new Response("", "", Main.game.getDefaultDialogueNoEncounter()));
+						Main.game.setContent(new Response("", "", Main.game.getDefaultDialogue(false)));
 					}
 				};
 
@@ -624,7 +626,7 @@ public class SlimeQueensLair {
 					
 				} else if(index==3 && !Main.game.getDialogueFlags().hasFlag(DialogueFlagValue.slimeRoyalGuardDefeatReacted)) {
 					return new Response("Continue",
-							UtilText.parse(Main.game.getNpc(SlimeRoyalGuard.class), "Let [slimeRoyalGuard.name] fuck you."),
+							"Continue on your way through the tower.",
 							CORRIDOR) {
 						@Override
 						public void effects() {
@@ -647,7 +649,7 @@ public class SlimeQueensLair {
 							Main.game.getNpc(SlimeRoyalGuard.class),
 							Util.newHashMapOfValues(
 									new Value<>(Main.game.getPlayer(), "[pc.speech(Fine, I'll spar with you,)] you say, readying yourself for a fight, [pc.speech(but remember what you said about your body being mine when you lose!)]"),
-									new Value<>(Main.game.getNpc(SlimeRoyalGuard.class), "[slimeRoyalGuard.speech(Hah!)] [slimeRoyalGuard.name] booms. [slimeRoyalGuard.speech(I'm looking forwards to claiming my prize!)]")));
+									new Value<>(Main.game.getNpc(SlimeRoyalGuard.class), "[slimeRoyalGuard.speech(Hah!)] [slimeRoyalGuard.name] booms. [slimeRoyalGuard.speech(I'm looking forward to claiming my prize!)]")));
 				} else {
 					return null;
 				}
@@ -722,7 +724,7 @@ public class SlimeQueensLair {
 								new Value<>(Main.game.getNpc(SlimeRoyalGuard.class), "[slimeRoyalGuard.speech(Excellent! Now, defend yourself!)] [slimeRoyalGuard.name] booms, before moving forwards to attack.")));
 				
 			} else if(index==2) {
-				if(Main.game.getPlayer().hasTraitActivated(Perk.BRAWLER) || Main.game.getPlayer().getHistory()==Occupation.SOLDIER) {
+				if(Main.game.getPlayer().hasTraitActivated(Perk.FEROCIOUS_WARRIOR) || Main.game.getPlayer().getHistory()==Occupation.SOLDIER) {
 					return new Response("Instruct", "Tell [slimeRoyalGuard.name] what [slimeRoyalGuard.he]'s doing wrong in an attempt to fluster [slimeRoyalGuard.him] into wearing [slimeRoyalGuard.himself] out.", ROYAL_GUARD_POST_ADMIRE_INSTRUCT) {
 						@Override
 						public void effects() {
@@ -1098,7 +1100,7 @@ public class SlimeQueensLair {
 							if(crown!=null) {
 								Main.game.getNpc(SlimeQueen.class).unequipClothingIntoVoid(crown, true, Main.game.getNpc(SlimeQueen.class));
 							}
-							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().addClothing(AbstractClothingType.generateClothing(ClothingType.HEAD_SLIME_QUEENS_TIARA, false), true));
+							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().addClothing(Main.game.getItemGen().generateClothing("innoxia_head_slime_queens_tiara", false), true));
 							
 							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().setQuestProgress(QuestLine.SIDE_SLIME_QUEEN, Quest.SLIME_QUEEN_FIVE_CONVINCE));
 							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().setQuestProgress(QuestLine.SIDE_SLIME_QUEEN, Quest.SLIME_QUEEN_SIX_CONVINCE));
@@ -1116,7 +1118,7 @@ public class SlimeQueensLair {
 							if(crown!=null) {
 								Main.game.getNpc(SlimeQueen.class).unequipClothingIntoVoid(crown, true, Main.game.getNpc(SlimeQueen.class));
 							}
-							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().addClothing(AbstractClothingType.generateClothing(ClothingType.HEAD_SLIME_QUEENS_TIARA, false), true));
+							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().addClothing(Main.game.getItemGen().generateClothing("innoxia_head_slime_queens_tiara", false), true));
 							
 							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().setQuestProgress(QuestLine.SIDE_SLIME_QUEEN, Quest.SLIME_QUEEN_FIVE_FORCE));
 							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().setQuestProgress(QuestLine.SIDE_SLIME_QUEEN, Quest.SLIME_QUEEN_SIX_FORCE));
@@ -1134,7 +1136,7 @@ public class SlimeQueensLair {
 							if(crown!=null) {
 								Main.game.getNpc(SlimeQueen.class).unequipClothingIntoVoid(crown, true, Main.game.getNpc(SlimeQueen.class));
 							}
-							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().addClothing(AbstractClothingType.generateClothing(ClothingType.HEAD_SLIME_QUEENS_TIARA, false), true));
+							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().addClothing(Main.game.getItemGen().generateClothing("innoxia_head_slime_queens_tiara", false), true));
 							
 							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().setQuestProgress(QuestLine.SIDE_SLIME_QUEEN, Quest.SLIME_QUEEN_FIVE_SUBMIT));
 							Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().setQuestProgress(QuestLine.SIDE_SLIME_QUEEN, Quest.SLIME_QUEEN_SIX_SUBMIT));
@@ -1165,23 +1167,32 @@ public class SlimeQueensLair {
 						UtilText.parse(Main.game.getNpc(SlimeQueen.class), "Play along with [slimeQueen.namePos] fantasies and force yourself on her."),
 						null, null, null, null, null, null,
 						true, false,
-						new SMMissionary(
-								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.MISSIONARY_KNEELING_BETWEEN_LEGS)),
+						new SMLyingDown(
+								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotLyingDown.MISSIONARY)),
 								Util.newHashMapOfValues(
-										new Value<>(Main.game.getNpc(SlimeQueen.class), SexSlotBipeds.MISSIONARY_ON_BACK))),
+										new Value<>(Main.game.getNpc(SlimeQueen.class), SexSlotLyingDown.LYING_DOWN))),
 						null,
 						null,
 						AFTER_SLIME_QUEEN_SEX, UtilText.parseFromXMLFile("places/submission/slimeQueensLair", "SLIME_QUEEN_SEX_START"));
 				
 			} else if(index==3) {
 				if(Main.game.getPlayer().getBodyMaterial()==BodyMaterial.SLIME) {
-					return new Response("Slime Bath", "Have a bath with [slimeQueen.Name].", SLIME_QUEEN_BATH);
+					return new Response("Slime Bath",
+							"Have a bath with [slimeQueen.Name]."
+									+ "<br/>[style.italicsExcellent(This will clean <b>all</b> fluids out of all your orifices.)]"
+									+ "<br/>[style.italicsGood(This will clean <b>only</b> your currently equipped clothing.)]",
+							SLIME_QUEEN_BATH);
 					
 				} else {
-					return new Response("Slime Bath", "Have a bath with [slimeQueen.name]. <b>This will transform you into a slime!</b>", SLIME_QUEEN_BATH_TRANSFORM) {
+					return new Response("Slime Bath",
+							"Have a bath with [slimeQueen.name]."
+								+ "<br/>[style.boldTerrible(Warning:)] [style.boldSlime(This will transform you into a slime!)]"
+								+ "<br/>[style.italicsExcellent(This will clean <b>all</b> fluids out of all your orifices.)]"
+								+ "<br/>[style.italicsGood(This will clean <b>only</b> your currently equipped clothing.)]",
+							SLIME_QUEEN_BATH_TRANSFORM) {
 						@Override
 						public Colour getHighlightColour() {
-							return Colour.TRANSFORMATION_GENERIC;
+							return PresetColour.TRANSFORMATION_GENERIC;
 						}
 						@Override
 						public void effects() {
@@ -1224,12 +1235,14 @@ public class SlimeQueensLair {
 	};
 	
 	public static final DialogueNode SLIME_QUEEN_BATH = new DialogueNode("Bed Chamber", "", true, true) {
-		
+		@Override
+		public void applyPreParsingEffects() {
+			Main.game.getTextEndStringBuilder().append(Main.game.getPlayer().applyWash(true, false, StatusEffect.CLEANED_BATH, 240+30));
+		}
 		@Override
 		public String getContent() {
 			return UtilText.parseFromXMLFile("places/submission/slimeQueensLair", "SLIME_QUEEN_BATH");
 		}
-
 		@Override
 		public Response getResponse(int responseTab, int index) {
 			if(index==1) {
@@ -1240,12 +1253,14 @@ public class SlimeQueensLair {
 						UtilText.parse(Main.game.getNpc(SlimeQueen.class), "Play along with [slimeQueen.namePos] fantasies and force yourself on her."),
 						null, null, null, null, null, null,
 						true, false,
-						new SMDoggy(
-								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotBipeds.DOGGY_BEHIND)),
+						new SMBath(SexPosition.ALL_FOURS,
+								Util.newHashMapOfValues(new Value<>(Main.game.getPlayer(), SexSlotAllFours.BEHIND)),
 								Util.newHashMapOfValues(
-										new Value<>(Main.game.getNpc(SlimeQueen.class), SexSlotBipeds.DOGGY_ON_ALL_FOURS))),
+										new Value<>(Main.game.getNpc(SlimeQueen.class), SexSlotAllFours.ALL_FOURS))),
 						null,
-						null, AFTER_SLIME_QUEEN_SEX, UtilText.parseFromXMLFile("places/submission/slimeQueensLair", "SLIME_QUEEN_BATH_SEX_START"));
+						null,
+						AFTER_SLIME_QUEEN_SEX_BATH,
+						UtilText.parseFromXMLFile("places/submission/slimeQueensLair", "SLIME_QUEEN_BATH_SEX_START"));
 				
 			} else {
 				return null;
@@ -1267,7 +1282,10 @@ public class SlimeQueensLair {
 	};
 	
 	public static final DialogueNode SLIME_QUEEN_LEAVE = new DialogueNode("Bed Chamber", "", false, true) {
-		
+		@Override
+		public void applyPreParsingEffects() {
+			Main.game.getPlayer().setNearestLocation(WorldType.SLIME_QUEENS_LAIR_FIRST_FLOOR, PlaceType.SLIME_QUEENS_LAIR_CORRIDOR, false);
+		}
 		@Override
 		public String getContent() {
 			return UtilText.parseFromXMLFile("places/submission/slimeQueensLair", "SLIME_QUEEN_LEAVE");
@@ -1292,11 +1310,35 @@ public class SlimeQueensLair {
 		}
 	};
 	
-	public static final DialogueNode AFTER_SLIME_QUEEN_SEX = new DialogueNode("Bed Chamber", "", true) {
-		
+	
+	public static final DialogueNode AFTER_SLIME_QUEEN_SEX_BATH = new DialogueNode("Finished", "", true) {
+		@Override
+		public String getDescription() {
+			return "Having had your fun, it's time to put an end to this...";
+		}
 		@Override
 		public String getContent() {
-			if(Sex.getNumberOfOrgasms(Main.game.getNpc(SlimeQueen.class))>=Main.game.getNpc(SlimeQueen.class).getOrgasmsBeforeSatisfied()) {
+			if(Main.sex.getNumberOfOrgasms(Main.game.getNpc(SlimeQueen.class))>=Main.game.getNpc(SlimeQueen.class).getOrgasmsBeforeSatisfied()) {
+				return UtilText.parseFromXMLFile("places/submission/slimeQueensLair", "AFTER_SLIME_QUEEN_SEX_BATH");
+			} else {
+				return UtilText.parseFromXMLFile("places/submission/slimeQueensLair", "AFTER_SLIME_QUEEN_SEX_BATH_NO_ORGASM");
+			}
+		}
+
+		@Override
+		public Response getResponse(int responseTab, int index) {
+			return BED_CHAMBER.getResponse(responseTab, index);
+		}
+	};
+	
+	public static final DialogueNode AFTER_SLIME_QUEEN_SEX = new DialogueNode("Finished", "", true) {
+		@Override
+		public String getDescription() {
+			return "Having had your fun, it's time to put an end to this...";
+		}
+		@Override
+		public String getContent() {
+			if(Main.sex.getNumberOfOrgasms(Main.game.getNpc(SlimeQueen.class))>=Main.game.getNpc(SlimeQueen.class).getOrgasmsBeforeSatisfied()) {
 				return UtilText.parseFromXMLFile("places/submission/slimeQueensLair", "AFTER_SLIME_QUEEN_SEX");
 			} else {
 				return UtilText.parseFromXMLFile("places/submission/slimeQueensLair", "AFTER_SLIME_QUEEN_SEX_NO_ORGASM");

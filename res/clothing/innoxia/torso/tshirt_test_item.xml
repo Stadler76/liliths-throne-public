@@ -12,7 +12,7 @@
 		
 		<description><![CDATA[A unisex fabric shirt, named after the T shape of its body and sleeves. It has a horrific colour pattern, and should only be used for testing purposes.]]></description> 
 		
-		<physicalResistance>1</physicalResistance> 
+		<physicalResistance>0</physicalResistance> 
 		
 		<femininity>ANDROGYNOUS</femininity> 
 		
@@ -62,14 +62,17 @@
 		
 		<incompatibleSlots/> 
 		
-		<primaryColours values="ALL"/>
+		<primaryColours values="DEBUG_ALL"/>
 		<primaryColoursDye/>
 		<secondaryColours/>
 		<secondaryColoursDye/>
 		<tertiaryColours/>
 		<tertiaryColoursDye/>
 		
-		<itemTags/>
+		<itemTags>
+			<tag>CHEAT_ITEM</tag>
+			<tag>FITS_ARM_WINGS</tag>
+		</itemTags>
 	</coreAttributes>
 
   <replacementText type="REMOVE_OR_EQUIP">
